@@ -32,43 +32,26 @@ export default function RegisterForm() {
     setLoading(true)
 
     try {
-      // Use Supabase client signUp so Supabase will send verification email
-      // Ensure verification links redirect back to a reachable app URL.
-      // Prefer an explicit public URL set in NEXT_PUBLIC_APP_URL (useful for ngrok or remote testing),
-      // otherwise fall back to the current origin in the browser.
-      const envUrl = process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/login` : null
-      const redirectTo = envUrl ?? (typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined)
-      const { data: signData, error: signError } = await supabase.auth.signUp(
-        { email, password },
-        { options: { emailRedirectTo: redirectTo } }
-      )
-      if (signError) {
-        console.error('Sign up error:', signError)
-        setError(signError.message)
+      // Use server-side register endpoint which creates a confirmed user (no email verification)
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name: fullName })
+      })
+      const payload = await res.json()
+      if (!res.ok || !payload.success) {
+        console.error('Server registration error:', payload)
+        setError(payload.error || 'Failed to register')
         setLoading(false)
         return
       }
 
-      // Attempt to create a profile record server-side (idempotent)
-      try {
-        const userId = (signData as any)?.user?.id || null
-        if (userId) {
-          await fetch('/api/auth/create-profile', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, email, full_name: fullName })
-          })
-        }
-      } catch (e) {
-        // non-fatal
-        console.warn('Failed to create profile record:', e)
-      }
-
+      // Profile is created server-side by the register endpoint
       setSuccess(true)
       setError(null)
       setTimeout(() => {
-        router.push('/login?message=' + encodeURIComponent('Registration successful! Please check your email to verify your account before signing in.'))
-      }, 2000)
+        router.push('/login?message=' + encodeURIComponent('Registration successful! You can sign in now.'))
+      }, 1200)
     } catch (err: any) {
       console.error('Registration error:', err)
       setError(err.message || 'An unexpected error occurred')

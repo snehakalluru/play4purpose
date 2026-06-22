@@ -35,11 +35,12 @@ export async function POST(req: Request) {
     console.log('Attempting registration for:', email)
 
     // Create user via admin API
+    // Create user via admin API and auto-confirm email to avoid verification step in dev
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       user_metadata: { first_name, last_name },
-      email_confirm: false // User will verify via email
+      email_confirm: true // Auto-confirm email so users can sign in immediately
     })
 
     if (userError) {
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Registration successful. Please check your email to verify your account.',
+      message: 'Registration successful. You can sign in now.',
       user_id: userId
     })
   } catch (err: any) {
