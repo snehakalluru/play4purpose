@@ -12,7 +12,7 @@ export default async function DashboardPage() {
     full_name: 'Member',
     charity: { name: '-' },
     contribution_percentage: 10,
-    subscription: { status: 'inactive', tier: null, current_period_end: null }
+    subscription: { status: 'inactive', plan_type: null, current_period_end: null }
   }
 
   if (accessToken) {

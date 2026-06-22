@@ -8,7 +8,10 @@ export default function AdminWinnersPanel() {
 
   async function fetchWinners() {
     setLoading(true)
-    const token = (document.cookie.match(/sb-access-token=([^;]+)/)||[])[1]
+    const { data } = await supabase.auth.getUser()
+    const token = (data as any)?.session?.access_token
+    if (!token) return
+
     const res = await fetch('/api/admin/winners/list', { headers: { Authorization: `Bearer ${token}` } })
     const json = await res.json()
     if (res.ok) setWinners(json.winners || [])
@@ -17,19 +20,35 @@ export default function AdminWinnersPanel() {
 
   useEffect(() => { fetchWinners() }, [])
 
-  async function review(proofId: string, action: 'approve' | 'reject') {
-    const token = (document.cookie.match(/sb-access-token=([^;]+)/)||[])[1]
-    const res = await fetch('/api/admin/winners/review', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ proof_id: proofId, action }) })
+  async function review(winnerId: string, action: 'approve' | 'reject') {
+    const { data } = await supabase.auth.getUser()
+    const token = (data as any)?.session?.access_token
+    if (!token) return
+
+    const res = await fetch('/api/admin/winners/review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ winner_id: winnerId, action })
+    })
     const json = await res.json()
     if (!res.ok) return alert(json?.error || 'Failed')
     fetchWinners()
   }
 
   async function payout(winnerId: string) {
-    const token = (document.cookie.match(/sb-access-token=([^;]+)/)||[])[1]
-    const res = await fetch('/api/admin/winners/payout', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ winner_id: winnerId }) })
+    const { data } = await supabase.auth.getUser()
+    const token = (data as any)?.session?.access_token
+    if (!token) return
+
+    const paymentMethod = prompt('Enter payment method (bank_transfer, paypal, etc.):') || 'bank_transfer'
+    const res = await fetch('/api/admin/winners/payout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ winner_id: winnerId, payment_method: paymentMethod })
+    })
     const json = await res.json()
     if (!res.ok) return alert(json?.error || 'Payout failed')
+    alert(`Payout processed! Ref: ${json.transaction_reference}`)
     fetchWinners()
   }
 
@@ -37,37 +56,59 @@ export default function AdminWinnersPanel() {
 
   return (
     <div className="space-y-4">
-      {winners.length === 0 && <div>No winners found</div>}
+      {winners.length === 0 && <div className="brutal-card p-6">No winners found</div>}
       {winners.map((w) => (
-        <div key={w.id} className="p-3 bg-background/20 rounded">
-          <div className="font-semibold">Winner: {w.user_id} — ${w.prize_amount}</div>
-          <div>Match: {w.match_count}</div>
-          <div>Status: {w.status}</div>
-          <div className="mt-2">
-            {w.winner_proofs && w.winner_proofs.length > 0 ? (
-              w.winner_proofs.map((p: any) => (
-                <div key={p.id} className="mt-2">
-                  <a href={p.file_url} target="_blank" rel="noreferrer" className="text-primary">View proof</a>
-                  <div className="inline-block ml-4">
-                    <button onClick={() => review(p.id, 'approve')} className="px-2 py-1 bg-green-600 rounded mr-2">Approve</button>
-                    <button onClick={() => review(p.id, 'reject')} className="px-2 py-1 bg-red-600 rounded">Reject</button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-sm text-muted">No proof uploaded yet</div>
-            )}
-            <div className="mt-2">
-              {w.payouts && w.payouts.length > 0 ? (
-                <div className="text-sm">Payouts: {w.payouts.length}</div>
-              ) : (
-                w.status === 'approved' && (
-                  <div className="mt-2">
-                    <button onClick={() => payout(w.id)} className="px-2 py-1 bg-blue-600 rounded">Trigger Payout</button>
-                  </div>
-                )
-              )}
+        <div key={w.id} className="brutal-card p-6">
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <h3 className="text-lg font-bold">Winner: {w.profile?.full_name || w.user_id}</h3>
+              <p className="text-sm text-muted">{w.profile?.email}</p>
+              <p className="text-sm">Draw: {w.draw?.name} ({w.draw?.draw_date})</p>
             </div>
+            <div className="text-right">
+              <div className="text-2xl font-black text-primary">£{w.amount?.toFixed(2)}</div>
+              <div className="text-sm">Position: {w.position === 1 ? 'Jackpot' : w.position === 2 ? '2nd Prize' : '3rd Prize'}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div>
+              <span className="text-sm text-muted">Verification:</span>
+              <span className={`ml-2 brutal-badge ${w.verification_status === 'approved' ? 'bg-green-500 text-white' : w.verification_status === 'rejected' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-black'}`}>
+                {w.verification_status}
+              </span>
+            </div>
+            <div>
+              <span className="text-sm text-muted">Payment:</span>
+              <span className={`ml-2 brutal-badge ${w.payment_status === 'paid' ? 'bg-green-500 text-white' : w.payment_status === 'failed' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-black'}`}>
+                {w.payment_status}
+              </span>
+            </div>
+          </div>
+
+          {w.proof_url && (
+            <div className="mt-3">
+              <a href={w.proof_url} target="_blank" rel="noreferrer" className="text-accent hover:underline text-sm">
+                View Proof Document
+              </a>
+            </div>
+          )}
+
+          <div className="mt-4 flex gap-2">
+            {w.verification_status === 'pending' && (
+              <>
+                <button onClick={() => review(w.id, 'approve')} className="brutal-btn bg-green-600 text-white">Approve</button>
+                <button onClick={() => review(w.id, 'reject')} className="brutal-btn bg-red-600 text-white">Reject</button>
+              </>
+            )}
+            {w.verification_status === 'approved' && w.payment_status !== 'paid' && (
+              <button onClick={() => payout(w.id)} className="brutal-btn brutal-btn-primary">Process Payout</button>
+            )}
+            {w.payouts && w.payouts.length > 0 && (
+              <div className="text-sm text-muted mt-2">
+                Payout: {w.payouts[0].status} | Ref: {w.payouts[0].transaction_reference}
+              </div>
+            )}
           </div>
         </div>
       ))}
