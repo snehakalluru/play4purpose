@@ -20,12 +20,23 @@ export default function LoginForm() {
         // If email is not confirmed and dev confirm is enabled server-side, try to confirm and retry once
         if (signInError.message?.toLowerCase().includes('email not confirmed')) {
           try {
-            await fetch('/api/auth/confirm', {
+            // add timeout to avoid hanging
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), 5000)
+            const resp = await fetch('/api/auth/confirm', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email })
+              body: JSON.stringify({ email }),
+              signal: controller.signal
             })
-            // retry sign in
+            clearTimeout(timer)
+
+            if (!resp.ok) {
+              const body = await resp.text().catch(() => '')
+              setError(`Auto-confirm failed: ${resp.status} ${body || resp.statusText}`)
+              return
+            }
+
             const { error: retryError } = await supabase.auth.signInWithPassword({ email, password })
             if (retryError) {
               setError(retryError.message)
@@ -33,9 +44,9 @@ export default function LoginForm() {
               router.push('/dashboard')
             }
             return
-          } catch (e) {
-            console.warn('Auto-confirm attempt failed', e)
-            setError(signInError.message)
+          } catch (e: any) {
+            if (e.name === 'AbortError') setError('Auto-confirm request timed out')
+            else setError('Auto-confirm attempt failed: ' + (e?.message || String(e)))
             return
           }
         }
