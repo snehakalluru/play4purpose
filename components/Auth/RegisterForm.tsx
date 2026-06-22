@@ -1,65 +1,101 @@
-"use client"
+'use client'
 import React, { useState } from 'react'
-import { registrationSchema } from '../../validators/auth'
 import { supabase } from '../../services/supabaseClient'
 import { useRouter } from 'next/navigation'
 
 export default function RegisterForm() {
   const router = useRouter()
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const onSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    const parsed = registrationSchema.safeParse({ email, password, full_name: fullName })
-    if (!parsed.success) return setError('Invalid input')
     setLoading(true)
-
-    // Call server registration to create user + profile
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, full_name: fullName })
-    })
-    const data = await res.json()
-    if (!res.ok) {
+    try {
+      // POST to registration API
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name: fullName }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Registration failed')
+        setLoading(false)
+        return
+      }
+      // Auto-login: sign in with the same credentials
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) {
+        setError(signInError.message)
+        setLoading(false)
+        return
+      }
+      router.push('/onboarding/charity')
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred')
       setLoading(false)
-      return setError(data.error || 'Registration failed')
     }
-
-    // Sign in to create session on client
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-    if (signInError) {
-      setLoading(false)
-      return setError(signInError.message)
-    }
-
-    // Redirect to onboarding charity step
-    router.push('/onboarding/charity')
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 max-w-md">
-      {error && <div className="text-red-400">{error}</div>}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {error && (
+        <div className="bg-red-100 border-2 border-red-600 text-red-700 px-4 py-3 font-bold text-sm shadow-[2px_2px_0px_rgba(220,38,38,0.8)]">
+          {error}
+        </div>
+      )}
       <div>
-        <label className="block text-sm">Full name</label>
-        <input value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full px-3 py-2 rounded-md bg-surface" />
+        <label htmlFor="fullName" className="block text-sm font-bold mb-1">
+          Full name
+        </label>
+        <input
+          id="fullName"
+          type="text"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          className="brutal-input w-full"
+          required
+        />
       </div>
       <div>
-        <label className="block text-sm">Email</label>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-3 py-2 rounded-md bg-surface" />
+        <label htmlFor="regEmail" className="block text-sm font-bold mb-1">
+          Email
+        </label>
+        <input
+          id="regEmail"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="brutal-input w-full"
+          required
+        />
       </div>
       <div>
-        <label className="block text-sm">Password</label>
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2 rounded-md bg-surface" />
+        <label htmlFor="regPassword" className="block text-sm font-bold mb-1">
+          Password
+        </label>
+        <input
+          id="regPassword"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="brutal-input w-full"
+          required
+          minLength={6}
+        />
       </div>
-      <div>
-        <button className="px-4 py-2 bg-primary rounded-md" disabled={loading}>{loading ? 'Creating...' : 'Register'}</button>
-      </div>
+      <button
+        type="submit"
+        className="brutal-btn brutal-btn-primary w-full"
+        disabled={loading}
+      >
+        {loading ? 'Creating account...' : 'Create account'}
+      </button>
     </form>
   )
 }

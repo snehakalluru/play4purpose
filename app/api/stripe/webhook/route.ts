@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import type Stripe from 'stripe'
 import { stripe } from '../../../../services/stripeClient'
 import { supabaseAdmin } from '../../../../services/supabaseAdmin'
 
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
   const sig = req.headers.get('stripe-signature') || ''
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
 
-  let event
+  let event: Stripe.Event
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret)
   } catch (err: any) {
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object
+        const session = event.data.object as Stripe.Checkout.Session
         const user_id = session.metadata?.user_id
         const subscriptionId = session.subscription
         // Create subscription record
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
       }
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object
+        const subscription = event.data.object as Stripe.Subscription
         const stripeId = subscription.id
         const status = subscription.status
         const period_end = subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
         break
       }
       case 'invoice.payment_failed': {
-        const invoice = event.data.object
+        const invoice = event.data.object as Stripe.Invoice
         const subId = invoice.subscription
         await supabaseAdmin.from('subscriptions').update({ status: 'past_due' }).eq('stripe_subscription_id', subId)
         break

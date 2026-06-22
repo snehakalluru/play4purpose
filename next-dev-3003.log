@@ -1,0 +1,105 @@
+
+> play4purpose@0.1.0 dev
+> next dev -p 3003
+
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3003
+   - Network:      http://10.116.205.9:3003
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 3.2s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 545ms (115 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 5s (654 modules)
+ GET /login?from=/onboarding/charity 200 in 5582ms
+ ○ Compiling /register ...
+ ✓ Compiled /register in 1860ms (662 modules)
+ GET /register 200 in 2032ms
+ ✓ Compiled in 177ms (115 modules)
+ ✓ Compiled in 336ms (662 modules)
+ ✓ Compiled in 381ms (662 modules)
+ ○ Compiling /api/auth/register ...
+ ✓ Compiled /api/auth/register in 922ms (430 modules)
+ POST /api/auth/register 200 in 2675ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 1319ms (772 modules)
+ GET /dashboard 200 in 3254ms
+ ✓ Compiled /login in 491ms (504 modules)
+ GET /login 200 in 1083ms
+ GET /dashboard 200 in 1779ms
+ GET /dashboard 200 in 1259ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1422ms (778 modules)
+ GET /scores 404 in 1866ms
+ GET /scores 404 in 73ms
+ GET /scores 404 in 391ms
+ GET /dashboard 200 in 1500ms
+ GET /dashboard 200 in 588ms
+ GET /draws 404 in 66ms
+ GET /draws 404 in 121ms
+ GET /dashboard 200 in 1265ms
+ ✓ Compiled in 216ms (299 modules)
+ ✓ Compiled in 176ms (299 modules)
+ GET /dashboard 200 in 2686ms
+ GET /dashboard 200 in 1416ms
+ ✓ Compiled in 151ms (299 modules)
+ GET /dashboard 200 in 337ms
+ ✓ Compiled in 720ms (888 modules)
+ GET /dashboard 200 in 1161ms
+ GET /dashboard 200 in 386ms
+ ✓ Compiled in 115ms (299 modules)
+ GET /dashboard 200 in 422ms
+ ✓ Compiled in 182ms (299 modules)
+ ✓ Compiled in 341ms (888 modules)
+ GET /dashboard 200 in 660ms
+ GET /dashboard 200 in 500ms
+ ✓ Compiled in 196ms (299 modules)
+ GET /dashboard 200 in 1037ms
+ GET /dashboard 200 in 432ms
+ ✓ Compiled in 234ms (299 modules)
+ GET /dashboard 200 in 390ms
+ ✓ Compiled in 334ms (888 modules)
+ GET /dashboard 200 in 784ms
+ GET /dashboard 200 in 563ms
+ ✓ Compiled in 123ms (299 modules)
+ GET /dashboard 200 in 431ms
+ ✓ Compiled in 160ms (299 modules)
+ ✓ Compiled in 412ms (888 modules)
+ GET /dashboard 200 in 536ms
+ GET /dashboard 200 in 942ms
+ GET /dashboard 200 in 1575ms
+ ✓ Compiled in 160ms (299 modules)
+ ✓ Compiled in 403ms (888 modules)
+ GET /dashboard 200 in 758ms
+ GET /dashboard 200 in 756ms
+ GET /dashboard 200 in 286ms
+ ✓ Compiled in 199ms (299 modules)
+ ✓ Compiled in 220ms (888 modules)
+ GET /dashboard 200 in 470ms
+ GET /dashboard 200 in 730ms
+ ✓ Compiled in 136ms (299 modules)
+ GET /dashboard 200 in 760ms
+ ✓ Compiled in 2.1s (299 modules)
+ ✓ Compiled in 137ms (299 modules)
+ ✓ Compiled in 95ms (299 modules)
+ ✓ Compiled in 99ms (299 modules)
+ ✓ Compiled in 180ms (299 modules)
+ ✓ Compiled in 839ms (773 modules)
+ ✓ Compiled in 963ms (773 modules)
+ ✓ Compiled in 902ms (764 modules)
+ ✓ Compiled in 102ms (289 modules)
+ ✓ Compiled in 81ms (289 modules)
+ ✓ Compiled in 121ms (289 modules)
+ ✓ Compiled in 257ms (753 modules)
+ ✓ Compiled in 141ms (289 modules)
+ ✓ Compiled in 117ms (289 modules)
+ ✓ Compiled in 99ms (289 modules)
+ ✓ Compiled in 144ms (289 modules)
+ ✓ Compiled in 141ms (289 modules)
+ ✓ Compiled in 119ms (289 modules)
+ ✓ Compiled in 114ms (289 modules)
+ ✓ Compiled in 122ms (289 modules)
+ ✓ Compiled in 182ms (289 modules)
+ ✓ Compiled in 533ms (115 modules)

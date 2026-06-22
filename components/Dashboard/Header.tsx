@@ -1,14 +1,13 @@
 "use client"
 import React from 'react'
 import { supabase } from '../../services/supabaseClient'
-import { useRouter } from 'next/navigation'
+import { clearSessionCookies } from '../../lib/auth/sessionCookies'
 
 export default function DashboardHeader({ name }: { name?: string }) {
-  const router = useRouter()
-
   async function logout() {
     await supabase.auth.signOut()
-    router.push('/')
+    clearSessionCookies()
+    window.location.assign('/')
   }
 
   return (

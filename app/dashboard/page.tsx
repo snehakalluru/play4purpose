@@ -5,12 +5,12 @@ import { supabaseAdmin } from '../../services/supabaseAdmin'
 import { cookies } from 'next/headers'
 
 export default async function DashboardPage() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const accessToken = cookieStore.get('sb-access-token')?.value || cookieStore.get('supabase-auth-token')?.value || ''
 
   let data = {
     full_name: 'Member',
-    charity: { name: '—' },
+    charity: { name: '-' },
     contribution_percentage: 10,
     subscription: { status: 'inactive', tier: null, current_period_end: null }
   }
@@ -32,10 +32,11 @@ export default async function DashboardPage() {
             .then((r) => r || { data: null }),
           supabaseAdmin.from('subscriptions').select('*').eq('user_id', userId).limit(1).single().then((r) => r || { data: null })
         ])
+        const charity = Array.isArray(charityRow?.charities) ? charityRow?.charities[0] : charityRow?.charities
 
         data = {
           full_name: profile?.full_name ?? user.user_metadata?.first_name ?? 'Member',
-          charity: charityRow?.charities ?? { name: '—' },
+          charity: charity ?? { name: '-' },
           contribution_percentage: charityRow?.contribution_percentage ?? 10,
           subscription: subscription ?? { status: 'inactive' }
         }

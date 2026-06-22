@@ -9,7 +9,18 @@ CREATE POLICY "winners_owner_or_admin" ON winners
   );
 
 -- Admins only can insert/update/delete winners (prevent users from creating winners)
-CREATE POLICY "winners_admin_only_modifications" ON winners
-  FOR INSERT, UPDATE, DELETE
+DROP POLICY IF EXISTS "winners_admin_only_insert" ON winners;
+CREATE POLICY "winners_admin_only_insert" ON winners
+  FOR INSERT
+  WITH CHECK (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
+
+DROP POLICY IF EXISTS "winners_admin_only_update" ON winners;
+CREATE POLICY "winners_admin_only_update" ON winners
+  FOR UPDATE
   USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin'))
   WITH CHECK (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
+
+DROP POLICY IF EXISTS "winners_admin_only_delete" ON winners;
+CREATE POLICY "winners_admin_only_delete" ON winners
+  FOR DELETE
+  USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       email,
       password,
       user_metadata: { first_name, last_name },
-      email_confirm: false
+      email_confirm: true
     } as any)
 
     if (userError) {
@@ -35,10 +35,13 @@ export async function POST(req: Request) {
       id: userId,
       email,
       full_name,
+      first_name,
+      last_name,
       role: 'user'
     })
 
     if (profileError) {
+      await supabaseAdmin.auth.admin.deleteUser(userId)
       return NextResponse.json({ error: profileError.message }, { status: 500 })
     }
 

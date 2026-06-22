@@ -50,24 +50,6 @@ CREATE TABLE IF NOT EXISTS scores (
   CONSTRAINT unique_user_score_date UNIQUE (user_id, score_date)
 );
 
--- Trigger to keep only latest 5 scores per user
-CREATE OR REPLACE FUNCTION keep_latest_five_scores() RETURNS trigger AS $$
-BEGIN
-  DELETE FROM scores
-  WHERE id IN (
-    SELECT id FROM scores
-    WHERE user_id = NEW.user_id
-    ORDER BY score_date DESC, created_at DESC
-    OFFSET 5
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_keep_latest_five_scores
-AFTER INSERT ON scores
-FOR EACH ROW EXECUTE FUNCTION keep_latest_five_scores();
-
 -- Draws
 CREATE TABLE IF NOT EXISTS draws (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

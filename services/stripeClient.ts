@@ -6,4 +6,4 @@ if (!stripeSecret) {
   throw new Error('STRIPE_SECRET_KEY is not set')
 }
 
-export const stripe = new Stripe(stripeSecret, { apiVersion: '2024-08-01' })
+export const stripe = new Stripe(stripeSecret, { apiVersion: '2022-11-15' })
