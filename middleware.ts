@@ -12,11 +12,19 @@ export async function middleware(req: NextRequest) {
   if (PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) return NextResponse.next()
 
   // Get Supabase session cookie
-  // Supabase stores auth in a JSON cookie: 'sb-<project-ref>-auth-token'
-  const sbCookie = req.cookies.get('sb-access-token')
-  // Also try the supabase-auth-token format
-  const altCookie = req.cookies.get('supabase-auth-token')
-  const sessionRaw = sbCookie?.value || altCookie?.value
+  // Supabase stores auth in a JSON cookie named like 'sb-<project-ref>-auth-token'
+  // Check for any cookie that starts with 'sb-' or the legacy 'supabase-auth-token'
+  let sessionRaw: string | undefined = undefined
+  for (const [name, cookie] of req.cookies) {
+    if (name.startsWith('sb-') && name.includes('-auth-token')) {
+      sessionRaw = cookie?.value
+      break
+    }
+    if (name === 'supabase-auth-token' || name === 'sb-access-token' || name === 'supabase-session') {
+      sessionRaw = cookie?.value
+      break
+    }
+  }
 
   if (!sessionRaw) {
     const loginUrl = new URL('/login', req.url)
@@ -36,7 +44,7 @@ export async function middleware(req: NextRequest) {
       try {
         const parsed = JSON.parse(sessionRaw)
         if (Array.isArray(parsed) && parsed[0]) accessToken = parsed[0]
-        else accessToken = parsed.access_token
+        else accessToken = parsed.access_token || parsed.accessToken || parsed[0]
       } catch {
         accessToken = sessionRaw
       }
