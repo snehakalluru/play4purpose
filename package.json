@@ -1,0 +1,32 @@
+{
+  "name": "play4purpose",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "framer-motion": "^10.0.0",
+    "next": "^15.5.19",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "resend": "^1.0.0",
+    "stripe": "^12.0.0",
+    "tailwindcss": "^3.0.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/react": "19.2.17",
+    "autoprefixer": "^10.0.0",
+    "eslint": "^8.0.0",
+    "postcss": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.9"
+  }
+}
