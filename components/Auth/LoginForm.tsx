@@ -17,6 +17,29 @@ export default function LoginForm() {
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) {
+        // If email is not confirmed and dev confirm is enabled server-side, try to confirm and retry once
+        if (signInError.message?.toLowerCase().includes('email not confirmed')) {
+          try {
+            await fetch('/api/auth/confirm', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email })
+            })
+            // retry sign in
+            const { error: retryError } = await supabase.auth.signInWithPassword({ email, password })
+            if (retryError) {
+              setError(retryError.message)
+            } else {
+              router.push('/dashboard')
+            }
+            return
+          } catch (e) {
+            console.warn('Auto-confirm attempt failed', e)
+            setError(signInError.message)
+            return
+          }
+        }
+
         setError(signInError.message)
       } else {
         router.push('/dashboard')
