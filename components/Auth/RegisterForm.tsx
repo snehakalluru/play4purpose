@@ -33,9 +33,15 @@ export default function RegisterForm() {
 
     try {
       // Use Supabase client signUp so Supabase will send verification email
-      // Ensure verification links redirect back to this running app
-      const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/login` : process.env.NEXT_PUBLIC_APP_URL
-      const { data: signData, error: signError } = await supabase.auth.signUp({ email, password }, { options: { emailRedirectTo: redirectTo } })
+      // Ensure verification links redirect back to a reachable app URL.
+      // Prefer an explicit public URL set in NEXT_PUBLIC_APP_URL (useful for ngrok or remote testing),
+      // otherwise fall back to the current origin in the browser.
+      const envUrl = process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/login` : null
+      const redirectTo = envUrl ?? (typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined)
+      const { data: signData, error: signError } = await supabase.auth.signUp(
+        { email, password },
+        { options: { emailRedirectTo: redirectTo } }
+      )
       if (signError) {
         console.error('Sign up error:', signError)
         setError(signError.message)
