@@ -15,7 +15,7 @@ export default function LoginForm() {
     setError(null)
     setLoading(true)
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) {
         // If email is not confirmed and dev confirm is enabled server-side, try to confirm and retry once
         if (signInError.message?.toLowerCase().includes('email not confirmed')) {
@@ -53,6 +53,19 @@ export default function LoginForm() {
 
         setError(signInError.message)
       } else {
+        // Persist session server-side so middleware can see it
+        try {
+          const session = (signInData as any)?.session
+          if (session) {
+            await fetch('/api/auth/set-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ session })
+            })
+          }
+        } catch (e) {
+          console.warn('Failed to set session cookie', e)
+        }
         router.push('/dashboard')
       }
     } catch (err: any) {
