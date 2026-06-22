@@ -1,5 +1,32 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../services/supabaseAdmin'
+import { requireAdmin } from '../../../../lib/adminUtils'
+
+export async function POST(req: Request) {
+  const adminCheck = await requireAdmin()
+  if (adminCheck instanceof NextResponse) return adminCheck
+
+  const body = await req.json()
+  const { draw_id, winners_count = 3 } = body || {}
+  if (!draw_id) return NextResponse.json({ success: false, error: 'draw_id required' }, { status: 400 })
+
+  // Pick winners randomly from scores (simple approach)
+  const { data: entries, error: entriesErr } = await supabaseAdmin.from('scores').select('user_id, score').order('random', { ascending: true }).limit(winners_count)
+  if (entriesErr) return NextResponse.json({ success: false, error: entriesErr.message }, { status: 500 })
+
+  const winners = (entries || []).map((e: any) => ({ user_id: e.user_id, draw_id, prize: 0 }))
+
+  // Insert winners and mark draw completed
+  const { error: insertErr } = await supabaseAdmin.from('winners').insert(winners)
+  if (insertErr) return NextResponse.json({ success: false, error: insertErr.message }, { status: 500 })
+
+  const { error: updateErr } = await supabaseAdmin.from('draws').update({ status: 'completed' }).eq('id', draw_id)
+  if (updateErr) return NextResponse.json({ success: false, error: updateErr.message }, { status: 500 })
+
+  return NextResponse.json({ success: true, winners })
+}
+import { NextResponse } from 'next/server'
+import { supabaseAdmin } from '../../../../services/supabaseAdmin'
 
 function randomNumbers(count = 5, max = 45) {
   const set = new Set<number>()

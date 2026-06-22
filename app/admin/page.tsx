@@ -1,3 +1,12 @@
+import AdminPanel from '../../components/Admin/AdminPanel'
+
+export default function AdminPage() {
+  return (
+    <div className="min-h-screen bg-background text-white">
+      <AdminPanel />
+    </div>
+  )
+}
 import React from 'react'
 import { supabaseAdmin } from '../../services/supabaseAdmin'
 import AdminWinnersPanel from '../../components/Admin/AdminWinnersPanel'
