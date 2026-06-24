@@ -5,16 +5,16 @@ import { supabase } from '../../services/supabaseClient'
 
 export default function SubscriptionPlans() {
   const router = useRouter()
-  const [loadingPriceId, setLoadingPriceId] = React.useState<string | null>(null)
+  const [loadingPlan, setLoadingPlan] = React.useState<'monthly' | 'yearly' | null>(null)
 
   const prices = [
-    { id: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || 'price_monthly', label: 'Monthly', price: '£10', period: '/month' },
-    { id: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || 'price_yearly', label: 'Yearly', price: '£100', period: '/year' }
+    { plan: 'monthly' as const, label: 'Monthly', price: '£10', period: '/month' },
+    { plan: 'yearly' as const, label: 'Yearly', price: '£100', period: '/year' }
   ]
 
-  async function handleCheckout(priceId: string) {
-    if (loadingPriceId) return
-    setLoadingPriceId(priceId)
+  async function handlePlanSelect(plan: 'monthly' | 'yearly') {
+    if (loadingPlan) return
+    setLoadingPlan(plan)
 
     try {
       const session = await supabase.auth.getSession()
@@ -27,7 +27,7 @@ export default function SubscriptionPlans() {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ priceId, quantity: 1 })
+        body: JSON.stringify({ plan })
       })
       const data = await res.json()
       if (!res.ok || !data.url) {
@@ -37,14 +37,14 @@ export default function SubscriptionPlans() {
       window.location.assign(data.url)
     } catch (err: any) {
       alert(err?.message || 'Failed to start checkout')
-      setLoadingPriceId(null)
+      setLoadingPlan(null)
     }
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {prices.map((p) => (
-        <div key={p.id} className="brutal-card p-6">
+        <div key={p.plan} className="brutal-card p-6">
           <h3 className="text-2xl font-black mb-2">{p.label}</h3>
           <div className="mb-4">
             <span className="text-4xl font-black">{p.price}</span>
@@ -69,11 +69,11 @@ export default function SubscriptionPlans() {
             </li>
           </ul>
           <button
-            onClick={() => handleCheckout(p.id)}
-            disabled={Boolean(loadingPriceId)}
+            onClick={() => handlePlanSelect(p.plan)}
+            disabled={Boolean(loadingPlan)}
             className="brutal-btn brutal-btn-primary w-full"
           >
-            {loadingPriceId === p.id ? 'Redirecting...' : `Choose ${p.label}`}
+            {loadingPlan === p.plan ? 'Redirecting...' : `Choose ${p.label}`}
           </button>
         </div>
       ))}

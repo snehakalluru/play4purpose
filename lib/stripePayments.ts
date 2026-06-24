@@ -4,6 +4,9 @@ import { supabaseAdmin } from '../services/supabaseAdmin'
 import { assertStripeConfigured, assertStripeWebhookConfigured, stripe } from '../services/stripeClient'
 
 const ACTIVE_STATUS = 'active'
+const VALID_PLANS = ['monthly', 'yearly'] as const
+
+type PaymentPlan = (typeof VALID_PLANS)[number]
 
 function getAppUrl() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
@@ -21,19 +24,20 @@ function getAppUrl() {
   return parsed.origin
 }
 
-function getAllowedPriceIds() {
-  return [
-    process.env.STRIPE_MONTHLY_PRICE_ID,
-    process.env.STRIPE_YEARLY_PRICE_ID,
-    ...(process.env.STRIPE_ALLOWED_PRICE_IDS || '').split(',')
-  ]
-    .filter((priceId): priceId is string => Boolean(priceId?.trim()))
-    .map((priceId) => priceId.trim())
+function isPaymentPlan(plan: unknown): plan is PaymentPlan {
+  return typeof plan === 'string' && VALID_PLANS.includes(plan as PaymentPlan)
 }
 
-function planTypeFromPrice(priceId: string) {
-  if (priceId === process.env.STRIPE_YEARLY_PRICE_ID) return 'yearly'
-  return 'monthly'
+function getPriceIdForPlan(plan: PaymentPlan) {
+  const priceId = plan === 'monthly'
+    ? process.env.STRIPE_PRICE_MONTHLY
+    : process.env.STRIPE_PRICE_YEARLY
+
+  if (!priceId) {
+    throw new Error(`Missing Stripe price id for ${plan} plan`)
+  }
+
+  return priceId
 }
 
 async function getAuthenticatedUser(req: Request) {
@@ -97,15 +101,15 @@ export async function createCheckoutSession(req: Request) {
     const auth = await getAuthenticatedUser(req)
     if (auth.response) return auth.response
 
-    const body = await req.json().catch(() => ({}))
-    const allowedPriceIds = getAllowedPriceIds()
-    const priceId = typeof body?.priceId === 'string' ? body.priceId : process.env.STRIPE_MONTHLY_PRICE_ID
+    const { plan, quantity: requestedQuantity } = await req.json().catch(() => ({}))
+    console.log('PLAN RECEIVED:', plan)
 
-    if (!priceId || !allowedPriceIds.includes(priceId)) {
+    if (!isPaymentPlan(plan)) {
       return NextResponse.json({ error: 'Invalid payment plan' }, { status: 400 })
     }
 
-    const quantity = Number.isInteger(body?.quantity) && body.quantity > 0 ? body.quantity : 1
+    const priceId = getPriceIdForPlan(plan)
+    const quantity = Number.isInteger(requestedQuantity) && requestedQuantity > 0 ? requestedQuantity : 1
     const user = auth.user
     const userId = user.id
     const appUrl = getAppUrl()
@@ -121,14 +125,14 @@ export async function createCheckoutSession(req: Request) {
         userId,
         user_id: userId,
         priceId,
-        plan_type: planTypeFromPrice(priceId)
+        plan_type: plan
       },
       payment_intent_data: {
         metadata: {
           userId,
           user_id: userId,
           priceId,
-          plan_type: planTypeFromPrice(priceId)
+          plan_type: plan
         }
       }
     })
@@ -157,7 +161,7 @@ async function markCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
 
   const now = new Date().toISOString()
   const amount = getSessionAmount(session)
-  const planType = session.metadata?.plan_type || planTypeFromPrice(session.metadata?.priceId || '')
+  const planType = isPaymentPlan(session.metadata?.plan_type) ? session.metadata.plan_type : 'monthly'
 
   const payload = {
     user_id: userId,
