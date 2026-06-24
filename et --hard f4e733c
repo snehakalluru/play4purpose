@@ -1,0 +1,29 @@
+[33m2f23d05[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m removed the route file
+[33mf4e733c[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix scores api
+[33m66cad38[m score UI
+[33mc71a6b7[m correcting scores data
+[33m2d02337[m score correction
+[33m89f0ec6[m fix: allow score submission without subscription
+[33m318c78e[m final deploy
+[33m5dd3a60[m Update package.json
+[33mb1d1aee[m Update package.json
+[33m02fe34c[m Update package.json
+[33m1a9eadc[m fix: stabilize vercel build config
+[33m853dec5[m Merge branch 'main' of https://github.com/snehakalluru/play4purpose
+[33m6f59809[m fix build
+[33m9660978[m deployement issues resolved
+[33mbda2f30[m Delete CNAME
+[33m002fdcd[m Create CNAME
+[33maae8858[m integrated the payment gateway and fixed the bugs in backend
+[33ma7d9837[m admin: add role column migration, admin utilities, protected admin APIs and minimal admin UI
+[33m63a2aa4[m auth: set server session cookie after sign in so middleware recognizes user
+[33m365b747[m middleware: detect Supabase auth cookies (sb-<ref>-auth-token) and parse common session shapes
+[33m37ea1e3[m dev(auth): add timeout and better error messages around auto-confirm flow
+[33m363778d[m dev(auth): auto-confirm on login when 'Email not confirmed' and DISABLE_EMAIL_VERIFICATION enabled
+[33mcd89beb[m dev(auth): add /api/auth/confirm to mark users confirmed (guarded by DISABLE_EMAIL_VERIFICATION)
+[33mf93bd0b[m auth: create auto-confirm users server-side; client uses register API (disable email verification)
+[33ma70f8a5[m fix(auth): prefer NEXT_PUBLIC_APP_URL for email redirect (ngrok/mobile-friendly)
+[33m9383f81[m fix(auth): set emailRedirectTo to app origin for verification link
+[33m077713d[m feat(auth): client-side signUp + profile upsert; send verification email
+[33m095d0a5[m[33m ([m[1;32mhail-brontomerus[m[33m)[m feat: add scores, draws, winnings pages and APIs (minimal)
+[33m0d7be32[m initial commit: project scaffold and phase1-2
