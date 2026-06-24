@@ -84,7 +84,7 @@ export async function GET(req: Request) {
 
     const [{ data: subscriptions, error: subscriptionsError }, { data: userCharities, error: charitiesError }, { data: scores, error: scoresError }] = await Promise.all([
       userIds.length
-        ? supabaseAdmin.from('subscriptions').select('user_id,status,plan_type,trial_end,trial_end_date,current_period_end,created_at').in('user_id', userIds)
+        ? supabaseAdmin.from('subscriptions').select('user_id,status,plan_type,trial_end,trial_end_date,current_period_end,stripe_session_id,amount_paid,currency,created_at').in('user_id', userIds)
         : Promise.resolve({ data: [], error: null }),
       userIds.length
         ? supabaseAdmin.from('user_charities').select('user_id,charity_id,contribution_percentage,charities(id,name)').in('user_id', userIds)

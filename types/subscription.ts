@@ -9,5 +9,9 @@ export interface Subscription {
   trial_end?: string | null
   trial_end_date?: string | null
   current_period_end?: string | null
+  stripe_session_id?: string | null
+  stripe_payment_intent_id?: string | null
+  amount_paid?: number | null
+  currency?: string | null
   created_at: string
 }

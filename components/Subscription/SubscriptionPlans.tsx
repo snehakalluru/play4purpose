@@ -5,6 +5,7 @@ import { supabase } from '../../services/supabaseClient'
 
 export default function SubscriptionPlans() {
   const router = useRouter()
+  const [loadingPriceId, setLoadingPriceId] = React.useState<string | null>(null)
 
   const prices = [
     { id: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || 'price_monthly', label: 'Monthly', price: '£10', period: '/month' },
@@ -12,20 +13,31 @@ export default function SubscriptionPlans() {
   ]
 
   async function handleCheckout(priceId: string) {
-    const session = await supabase.auth.getSession()
-    const token = session.data?.session?.access_token
-    if (!token) return router.push('/login')
+    if (loadingPriceId) return
+    setLoadingPriceId(priceId)
 
-    const res = await fetch('/api/stripe/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ priceId, returnUrl: window.location.origin + '/dashboard' })
-    })
-    const data = await res.json()
-    if (data.url) {
-      window.location.href = data.url
-    } else {
-      alert(data.error || 'Failed to start checkout')
+    try {
+      const session = await supabase.auth.getSession()
+      const token = session.data?.session?.access_token
+      if (!token) {
+        router.push('/login')
+        return
+      }
+
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ priceId, quantity: 1 })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Failed to start checkout')
+      }
+
+      window.location.assign(data.url)
+    } catch (err: any) {
+      alert(err?.message || 'Failed to start checkout')
+      setLoadingPriceId(null)
     }
   }
 
@@ -58,9 +70,10 @@ export default function SubscriptionPlans() {
           </ul>
           <button
             onClick={() => handleCheckout(p.id)}
+            disabled={Boolean(loadingPriceId)}
             className="brutal-btn brutal-btn-primary w-full"
           >
-            Choose {p.label}
+            {loadingPriceId === p.id ? 'Redirecting...' : `Choose ${p.label}`}
           </button>
         </div>
       ))}

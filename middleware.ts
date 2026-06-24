@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getUserRoleFromRequest } from './lib/getUserRole'
 
-const PUBLIC_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/favicon.ico']
-const PUBLIC_PREFIXES = ['/_next/', '/api/stripe/webhook', '/api/auth/', '/api/charities']
+const PUBLIC_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/success', '/cancel', '/favicon.ico']
+const PUBLIC_PREFIXES = ['/_next/', '/api/checkout', '/api/webhook', '/api/stripe/checkout', '/api/stripe/webhook', '/api/auth/', '/api/charities']
 const SUBSCRIPTION_REQUIRED_PREFIXES = ['/draws']
 
 function isPublicPath(pathname: string) {

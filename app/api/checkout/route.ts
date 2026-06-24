@@ -1,4 +1,4 @@
-import { createCheckoutSession } from '../../../../lib/stripePayments'
+import { createCheckoutSession } from '../../../lib/stripePayments'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

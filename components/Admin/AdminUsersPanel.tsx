@@ -90,6 +90,14 @@ export default function AdminUsersPanel() {
                 <td className="px-4 py-3 text-sm">
                   <div className="font-bold">{user.subscription?.status || 'none'}</div>
                   <div className="text-xs text-muted">{user.subscription?.plan_type || 'trial'}</div>
+                  {user.subscription?.amount_paid ? (
+                    <div className="text-xs text-muted">
+                      {new Intl.NumberFormat('en-GB', {
+                        style: 'currency',
+                        currency: (user.subscription.currency || 'gbp').toUpperCase()
+                      }).format(user.subscription.amount_paid / 100)}
+                    </div>
+                  ) : null}
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <div>{user.selected_charity?.charity?.name || 'Not selected'}</div>

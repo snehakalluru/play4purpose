@@ -1,8 +1,8 @@
-import { createCheckoutSession } from '../../../../lib/stripePayments'
+import { handleStripeWebhook } from '../../../lib/stripePayments'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request) {
-  return createCheckoutSession(req)
+  return handleStripeWebhook(req)
 }
