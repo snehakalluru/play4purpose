@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
 const scoreObjectSchema = z.object({
-  score: z.number().int().min(40).max(200, {
-    message: 'Score must be between 40 and 200'
+  score: z.number().int().min(1).max(45, {
+    message: 'Score must be between 1 and 45'
   }),
   played_date: z.string().optional(),
   score_date: z.string().optional()

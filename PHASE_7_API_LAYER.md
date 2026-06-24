@@ -269,8 +269,8 @@ import { z } from 'zod'
 export const scoreSchema = z.object({
   score: z.number()
     .int('Score must be a whole number')
-    .min(40, 'Score must be at least 40')
-    .max(200, 'Score must be at most 200'),
+    .min(1, 'Score must be at least 1')
+    .max(45, 'Score must be at most 45'),
   
   played_date: z.string()
     .datetime('Invalid date format')
@@ -1232,8 +1232,8 @@ paths:
               properties:
                 score:
                   type: integer
-                  minimum: 40
-                  maximum: 200
+                  minimum: 1
+                  maximum: 45
                 played_date:
                   type: string
                   format: date

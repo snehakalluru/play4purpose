@@ -1054,13 +1054,13 @@ export class FraudDetector {
     }
 
     // Check for perfect scores (impossible in golf)
-    if (scoresArray.some(s => s === 40 || s === 41)) {
+    if (scoresArray.some(s => s === 1 || s === 2)) {
       return {
         suspicious: true,
         reason: 'Suspiciously low scores (possible cheating)',
         severity: 'high',
         details: {
-          scores: scoresArray.filter(s => s <= 45)
+          scores: scoresArray.filter(s => s <= 5)
         }
       }
     }

@@ -619,7 +619,7 @@ Platform Keeps: £100 - £10.00 = £90.00
 - **Threat:** Submit fake scores to gain entry advantage
 - **Mitigation:**
   - One score per user per date (DB constraint)
-  - Range validation (40-200)
+  - Range validation (1-45)
   - No edit/update (delete and re-add)
   - Future dates blocked
   - Admin can review suspicious patterns

@@ -270,18 +270,18 @@ describe('Score Validators', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should reject score below 40', () => {
+    it('should reject score below 1', () => {
       const result = scoreSchema.safeParse({
         score: 35,
         played_date: '2024-01-15'
       })
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('at least 40')
+        expect(result.error.errors[0].message).toContain('at least 1')
       }
     })
 
-    it('should reject score above 200', () => {
+    it('should reject score above 45', () => {
       const result = scoreSchema.safeParse({
         score: 250,
         played_date: '2024-01-15'
@@ -593,7 +593,7 @@ describe('Score Entry Flow', () => {
     expect(error).toBeDefined()
   })
 
-  it('should reject score outside 40-200 range', async () => {
+  it('should reject score outside 1-45 range', async () => {
     const { error } = await createTestScore(testUser.id, {
       score: 35,
       played_date: '2024-01-17'
@@ -863,7 +863,7 @@ test.describe('Score Entry Flow', () => {
     await page.click('button[type="submit"]')
 
     // Should show validation error
-    await expect(page.locator('[data-testid="error-message"]')).toContainText('at least 40')
+    await expect(page.locator('[data-testid="error-message"]')).toContainText('at least 1')
   })
 
   test('should delete score', async ({ page }) => {

@@ -149,7 +149,7 @@
 6. Winners have 30 days to provide payment details
 
 ### Score Rules:
-1. Valid range: 40-200 (golf strokes)
+1. Valid range: 1-45 (golf strokes)
 2. One score per user per date
 3. Unlimited history stored
 4. Rolling average: last 5 scores only

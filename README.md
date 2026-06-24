@@ -38,7 +38,7 @@ A subscription-based golf rewards platform where users enter scores, support cha
 - `profiles` - User profiles with role-based access
 - `subscriptions` - Stripe subscription tracking
 - `charities` - Available charities for donations
-- `scores` - Golf score history (40-200 range)
+- `scores` - Golf score history (1-45 range)
 - `score_statistics` - Rolling averages (auto-calculated via triggers)
 - `draws` - Monthly prize draws
 - `draw_entries` - User entries in draws
@@ -266,7 +266,7 @@ play4purpose/
 
 ## 📊 Score Management
 
-- **Range**: 40-200 (valid golf scores)
+- **Range**: 1-45 (valid golf scores)
 - **History**: Unlimited score storage
 - **Rolling Average**: Last 5 scores only
 - **Auto-calculation**: Database trigger updates statistics automatically

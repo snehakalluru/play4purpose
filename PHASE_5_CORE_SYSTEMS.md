@@ -12,7 +12,7 @@
 └─────────────────────────────────────────────────────────────┘
 
 VALIDATION:
-├── Range: 40-200 (inclusive)
+├── Range: 1-45 (inclusive)
 ├── One score per user per date (unique constraint)
 ├── Date cannot be in the future
 ├── Must have active subscription
@@ -1187,7 +1187,7 @@ export async function getCharityDonationStats() {
 **Core Business Systems include:**
 
 ### 5A: Golf Score System
-- ✅ Score entry with validation (40-200 range)
+- ✅ Score entry with validation (1-45 range)
 - ✅ One score per date constraint
 - ✅ FIFO deletion when > 5 scores
 - ✅ Auto-calculated rolling averages

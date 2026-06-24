@@ -146,7 +146,7 @@ CREATE INDEX idx_subscriptions_period_end ON subscriptions(current_period_end);
 CREATE TABLE scores (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  score int NOT NULL CHECK (score >= 40 AND score <= 200),
+  score int NOT NULL CHECK (score >= 1 AND score <= 45),
   played_date date NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT unique_user_played_date UNIQUE (user_id, played_date)
@@ -159,7 +159,7 @@ CREATE INDEX idx_scores_user_date ON scores(user_id, played_date DESC);
 ```
 
 **Constraints:**
-- `score` must be between 40 and 200
+- `score` must be between 1 and 45
 - `played_date` cannot be in the future
 - One score per user per date (unique constraint)
 - No updates allowed (enforced by trigger)
@@ -194,7 +194,7 @@ CREATE INDEX idx_score_stats_user_id ON score_statistics(user_id);
 ```
 
 **Constraints:**
-- `rolling_average` and `last_five_average` must be between 40 and 200
+- `rolling_average` and `last_five_average` must be between 1 and 45
 - One record per user (unique constraint)
 
 **RLS Policy:**
