@@ -30,24 +30,28 @@ export default function WinningsPage() {
     if (json.ok) setWinners(json.data || [])
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  if (loading) return <div className="app-page flex items-center justify-center text-muted">Loading winnings...</div>
 
   return (
-    <div className="min-h-screen p-6 bg-background">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-black mb-6 uppercase">My Winnings</h1>
+    <div className="app-page">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6">
+          <p className="section-eyebrow">Prize history</p>
+          <h1 className="mt-2 text-3xl font-black text-slate-950 md:text-5xl">My Winnings</h1>
+          <p className="mt-2 text-muted">Track verification, payouts, and proof uploads for your prizes.</p>
+        </div>
 
         {winners.length === 0 ? (
           <div className="brutal-card p-8 text-center">
             <p className="text-muted">No winnings yet. Keep playing!</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             {winners.map((w) => (
-              <div key={w.id} className="brutal-card p-6">
-                <div className="flex justify-between items-start mb-3">
+              <div key={w.id} className="brutal-card ticket-card p-6">
+                <div className="mb-3 flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-bold">{w.draw?.name || 'Draw'}</h2>
+                    <h2 className="text-xl font-black">{w.draw?.name || 'Draw'}</h2>
                     <p className="text-sm text-muted">Date: {w.draw?.draw_date}</p>
                   </div>
                   <div className="text-right">

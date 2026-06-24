@@ -45,24 +45,28 @@ export default function DrawsPage() {
     setEntering(null)
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  if (loading) return <div className="app-page flex items-center justify-center text-muted">Loading draws...</div>
 
   return (
-    <div className="min-h-screen p-6 bg-background">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-black mb-6 uppercase">Prize Draws</h1>
+    <div className="app-page">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6">
+          <p className="section-eyebrow">Prize room</p>
+          <h1 className="mt-2 text-3xl font-black text-slate-950 md:text-5xl">Prize Draws</h1>
+          <p className="mt-2 text-muted">See upcoming draws, entry status, prize pools, and winning numbers.</p>
+        </div>
 
         {draws.length === 0 ? (
           <div className="brutal-card p-8 text-center">
             <p className="text-muted">No draws available yet. Check back soon!</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             {draws.map((draw) => (
-              <div key={draw.id} className="brutal-card p-6">
-                <div className="flex justify-between items-start mb-4">
+              <div key={draw.id} className="brutal-card ticket-card p-6">
+                <div className="mb-4 flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-bold">{draw.name || `Draw - ${draw.draw_date}`}</h2>
+                    <h2 className="text-xl font-black">{draw.name || `Draw - ${draw.draw_date}`}</h2>
                     <p className="text-sm text-muted mt-1">Date: {draw.draw_date}</p>
                     <p className="text-sm text-muted">Status: <span className="capitalize font-semibold">{draw.status}</span></p>
                   </div>
@@ -78,7 +82,7 @@ export default function DrawsPage() {
                 </div>
 
                 {draw.prize_pool > 0 && (
-                  <div className="mb-4 p-3 bg-surface rounded">
+                  <div className="mb-4 rounded-md bg-white/70 p-3">
                     <p className="text-sm font-semibold">Prize Pool: £{draw.prize_pool.toFixed(2)}</p>
                     <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
                       <div>Jackpot: £{draw.jackpot_amount?.toFixed(2)}</div>
@@ -89,7 +93,7 @@ export default function DrawsPage() {
                 )}
 
                 {draw.hasEntry && draw.entryNumber && (
-                  <div className="mb-4 p-3 bg-accent/20 rounded border-2 border-accent">
+                  <div className="mb-4 rounded-md border border-accent/30 bg-accent/10 p-3">
                     <p className="text-sm font-semibold">Your Entry Number:</p>
                     <p className="text-lg font-mono font-bold">{draw.entryNumber}</p>
                   </div>
@@ -106,7 +110,7 @@ export default function DrawsPage() {
                 )}
 
                 {draw.status === 'completed' && draw.winning_number && (
-                  <div className="mt-4 p-3 bg-primary/20 rounded border-2 border-primary">
+                  <div className="mt-4 rounded-md border border-primary/30 bg-primary/10 p-3">
                     <p className="text-sm font-semibold">Winning Entry:</p>
                     <p className="text-lg font-mono font-bold">{draw.winning_number}</p>
                   </div>

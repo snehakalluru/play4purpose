@@ -90,7 +90,7 @@ export default function RegisterForm() {
   if (success) {
     return (
       <div className="space-y-4">
-        <div className="bg-green-100 border-2 border-green-600 text-green-700 px-4 py-3 font-bold text-sm">
+        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
           Account created. Your 7-day free trial is active.
         </div>
         <p className="text-sm text-muted">Redirecting to dashboard...</p>
@@ -101,7 +101,7 @@ export default function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <div className="bg-red-100 border-2 border-red-600 text-red-700 px-4 py-3 font-bold text-sm">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
           {error}
         </div>
       )}
@@ -165,4 +165,3 @@ export default function RegisterForm() {
     </form>
   )
 }
-

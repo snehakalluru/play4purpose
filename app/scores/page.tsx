@@ -154,23 +154,34 @@ export default function ScoresPage() {
     ? (lastFive.reduce((sum, score) => sum + Number(score.score_value || 0), 0) / lastFive.length).toFixed(1)
     : '-'
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading scores...</div>
+  if (loading) return <div className="app-page flex items-center justify-center text-muted">Loading scores...</div>
 
   return (
-    <div className="min-h-screen p-6 bg-background">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-black mb-6 uppercase">My Scores</h1>
+    <div className="app-page">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="section-eyebrow">Performance</p>
+            <h1 className="mt-2 text-3xl font-black text-slate-950 md:text-5xl">My Scores</h1>
+            <p className="mt-2 text-muted">Log rounds, tune your form, and keep your prize draw profile current.</p>
+          </div>
+          <div className="brutal-card score-spark px-5 py-4">
+            <p className="text-sm font-bold text-muted">Last 5 average</p>
+            <p className="text-3xl font-black text-primary">{average}</p>
+          </div>
+        </div>
 
         {error && (
-          <div className="brutal-card p-4 mb-6 text-red-400">
+          <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 font-bold text-red-700">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <div className="brutal-card p-6">
-              <h2 className="text-xl font-bold mb-4">Add New Score</h2>
+              <p className="section-eyebrow">New round</p>
+              <h2 className="mb-4 text-xl font-black">Add Score</h2>
               <form onSubmit={submitScore} className="space-y-4">
                 <div>
                   <label htmlFor="score" className="block text-sm font-bold mb-2">Score (1-45)</label>
@@ -209,14 +220,15 @@ export default function ScoresPage() {
           </div>
 
           <div className="lg:col-span-2">
-            <div className="brutal-card p-6 mb-6">
-              <h2 className="text-xl font-bold mb-3">Statistics</h2>
+            <div className="brutal-card mb-6 p-6">
+              <p className="section-eyebrow">Snapshot</p>
+              <h2 className="mb-4 text-xl font-black">Statistics</h2>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="rounded-md bg-white/55 p-3">
                   <p className="text-sm text-muted">Total Scores</p>
                   <p className="text-2xl font-black">{scores.length}</p>
                 </div>
-                <div>
+                <div className="rounded-md bg-white/55 p-3">
                   <p className="text-sm text-muted">Last 5 Average</p>
                   <p className="text-2xl font-black text-primary">{average}</p>
                 </div>
@@ -224,13 +236,14 @@ export default function ScoresPage() {
             </div>
 
             <div className="brutal-card p-6">
-              <h2 className="text-xl font-bold mb-4">Score History</h2>
+              <p className="section-eyebrow">Timeline</p>
+              <h2 className="mb-4 text-xl font-black">Score History</h2>
               {scores.length === 0 ? (
                 <p className="text-muted text-center py-8">No scores recorded yet. Add your first score.</p>
               ) : (
                 <div className="space-y-2">
                   {scores.map((score) => (
-                    <div key={score.id} className="flex flex-col gap-3 p-3 bg-surface rounded md:flex-row md:items-center md:justify-between">
+                    <div key={score.id} className="flex flex-col gap-3 rounded-md border border-black/10 bg-white/65 p-3 md:flex-row md:items-center md:justify-between">
                       {editingId === score.id ? (
                         <div className="flex-1 grid grid-cols-1 gap-2 md:grid-cols-2">
                           <input
