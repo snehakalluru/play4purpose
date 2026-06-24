@@ -1,6 +1,6 @@
 import Link from 'next/link'
+import CharitySection from '../components/Charity/CharitySection'
 import { createClient } from '@supabase/supabase-js'
-import { Suspense } from 'react'
 
 // Revalidate every 60 seconds
 export const revalidate = 60
@@ -33,48 +33,6 @@ async function getStats() {
   }
 }
 
-async function CharitySection() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  const { data: charities } = await supabase
-    .from('charities')
-    .select('*')
-    .limit(3)
-
-  if (!charities || charities.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted">Supporting amazing causes</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {charities.map((charity) => (
-        <div
-          key={charity.id}
-          className="brutal-card p-6 hover:scale-105 transition-transform duration-300"
-        >
-          {(charity.image_url || charity.logo_url) && (
-            <img
-              src={charity.image_url || charity.logo_url}
-              alt={charity.name}
-              className="h-16 w-auto mx-auto mb-4 object-contain"
-            />
-          )}
-          <h3 className="text-xl font-bold text-center mb-2">{charity.name}</h3>
-          <p className="text-sm text-muted text-center line-clamp-2">
-            {charity.description}
-          </p>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 export default async function HomePage() {
   const stats = await getStats()
@@ -262,9 +220,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <Suspense fallback={<div className="text-center">Loading charities...</div>}>
-            <CharitySection />
-          </Suspense>
+          <CharitySection />
         </div>
       </section>
 
