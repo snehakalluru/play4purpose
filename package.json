@@ -1,6 +1,7 @@
 {
   "name": "play4purpose",
   "version": "0.1.0",
+  "packageManager": "pnpm@11.8.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,8 +27,10 @@
     "node": "18.x"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.0",
     "@types/node": "^18.0.0",
-    "@types/react": "19.2.17",
+    "@types/react": "18.2.0",
+    "@types/react-dom": "18.2.0",
     "autoprefixer": "^10.0.0",
     "eslint": "^8.0.0",
     "postcss": "^8.0.0",
