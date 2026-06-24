@@ -4,7 +4,7 @@ export interface Subscription {
   stripe_subscription_id?: string
   tier?: 'monthly' | 'yearly' | 'trial'
   plan_type?: 'monthly' | 'yearly'
-  status: 'active' | 'trialing' | 'cancelled' | 'past_due' | 'incomplete'
+  status: 'active' | 'cancelled' | 'lapsed' | 'trialing' | 'past_due' | 'incomplete'
   is_trial?: boolean
   trial_end?: string | null
   trial_end_date?: string | null

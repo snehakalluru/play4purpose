@@ -1,6 +1,6 @@
 export type Role = 'user' | 'admin'
 export type SubscriptionPlan = 'monthly' | 'yearly'
-export type SubscriptionStatus = 'active' | 'trialing' | 'cancelled' | 'past_due' | 'incomplete'
+export type SubscriptionStatus = 'active' | 'cancelled' | 'lapsed' | 'trialing' | 'past_due' | 'incomplete'
 export type ProfileSubscriptionStatus = 'trial_active' | 'active' | 'expired'
 export type DrawStatus = 'draft' | 'scheduled' | 'running' | 'completed'
 export type VerificationStatus = 'pending' | 'approved' | 'rejected'

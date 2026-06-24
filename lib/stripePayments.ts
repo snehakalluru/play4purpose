@@ -2,11 +2,21 @@ import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { supabaseAdmin } from '../services/supabaseAdmin'
 import { assertStripeConfigured, assertStripeWebhookConfigured, stripe } from '../services/stripeClient'
-import { getSubscriptionStatus } from './subscriptionStatus'
+import { assertValidSubscriptionStatus, normalizeSubscriptionStatus } from './subscriptionStatus'
 
 const VALID_PLANS = ['monthly', 'yearly'] as const
 
 type PaymentPlan = (typeof VALID_PLANS)[number]
+
+function logAndValidateSubscriptionStatus(status: string) {
+  console.log('SUBSCRIPTION STATUS BEFORE INSERT:', status)
+  assertValidSubscriptionStatus(status)
+  return status
+}
+
+function fromStripeTimestamp(timestamp?: number | null) {
+  return timestamp ? new Date(timestamp * 1000).toISOString() : null
+}
 
 function getAppUrl() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
@@ -79,8 +89,7 @@ async function findOrCreateCustomer(userId: string, email?: string | null) {
       .eq('id', subscription.id)
     if (updateError) throw updateError
   } else {
-    const status = getSubscriptionStatus('trialing')
-    console.log('SUBSCRIPTION INSERT STATUS:', status)
+    const status = logAndValidateSubscriptionStatus(normalizeSubscriptionStatus('trialing'))
 
     const { error: insertError } = await supabaseAdmin
       .from('subscriptions')
@@ -88,7 +97,7 @@ async function findOrCreateCustomer(userId: string, email?: string | null) {
         user_id: userId,
         stripe_customer_id: customer.id,
         plan_type: 'monthly',
-        status,
+        status: normalizeSubscriptionStatus(status),
         is_trial: true
       })
     if (insertError) throw insertError
@@ -155,6 +164,14 @@ function getSessionAmount(session: Stripe.Checkout.Session) {
   return session.amount_total ?? session.amount_subtotal ?? 0
 }
 
+async function getCheckoutSubscription(session: Stripe.Checkout.Session) {
+  const subscription = session.subscription
+  if (!subscription) return null
+  if (typeof subscription !== 'string') return subscription
+
+  return stripe.subscriptions.retrieve(subscription)
+}
+
 async function markCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId || session.metadata?.user_id
   if (!userId) {
@@ -165,21 +182,24 @@ async function markCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   const now = new Date().toISOString()
   const amount = getSessionAmount(session)
   const planType = isPaymentPlan(session.metadata?.plan_type) ? session.metadata.plan_type : 'monthly'
-  const status = getSubscriptionStatus(session.status === 'complete' ? 'active' : session.status || 'incomplete')
-  console.log('SUBSCRIPTION INSERT STATUS:', status)
+  const stripeSubscription = await getCheckoutSubscription(session)
+  const rawStatus = stripeSubscription?.status || (session.payment_status === 'paid' || session.status === 'complete' ? 'active' : session.status || 'incomplete')
+  const status = logAndValidateSubscriptionStatus(normalizeSubscriptionStatus(rawStatus))
 
   const payload = {
     user_id: userId,
     stripe_customer_id: typeof session.customer === 'string' ? session.customer : session.customer?.id ?? null,
+    stripe_subscription_id: stripeSubscription?.id ?? null,
     stripe_session_id: session.id,
     stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id ?? null,
     amount_paid: amount,
     currency: session.currency,
     plan_type: planType,
-    status,
+    status: normalizeSubscriptionStatus(status),
     is_trial: false,
     started_at: now,
-    current_period_start: now,
+    current_period_start: fromStripeTimestamp(stripeSubscription?.current_period_start) || now,
+    current_period_end: fromStripeTimestamp(stripeSubscription?.current_period_end),
     updated_at: now,
     payment_metadata: session.metadata || {}
   }
@@ -193,6 +213,69 @@ async function markCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
     .update({ subscription_status: 'active', updated_at: now })
+    .eq('id', userId)
+
+  if (profileError) throw profileError
+}
+
+async function findUserIdForStripeSubscription(subscription: Stripe.Subscription) {
+  const metadataUserId = subscription.metadata?.userId || subscription.metadata?.user_id
+  if (metadataUserId) return metadataUserId
+
+  const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id
+  if (!customerId) return null
+
+  const { data, error } = await supabaseAdmin
+    .from('subscriptions')
+    .select('user_id')
+    .eq('stripe_customer_id', customerId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw error
+  return data?.user_id ?? null
+}
+
+function getProfileSubscriptionStatus(status: string) {
+  if (status === 'active') return 'active'
+  if (status === 'trialing') return 'trial_active'
+  return 'expired'
+}
+
+async function upsertStripeSubscription(subscription: Stripe.Subscription, rawStatus = subscription.status) {
+  const userId = await findUserIdForStripeSubscription(subscription)
+  if (!userId) {
+    console.warn('[stripe webhook] subscription event missing user metadata', { subscriptionId: subscription.id })
+    return
+  }
+
+  const now = new Date().toISOString()
+  const planType = isPaymentPlan(subscription.metadata?.plan_type) ? subscription.metadata.plan_type : 'monthly'
+  const status = logAndValidateSubscriptionStatus(normalizeSubscriptionStatus(rawStatus))
+  const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id ?? null
+
+  const { error } = await supabaseAdmin
+    .from('subscriptions')
+    .upsert({
+      user_id: userId,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscription.id,
+      plan_type: planType,
+      status: normalizeSubscriptionStatus(status),
+      is_trial: status === 'trialing',
+      started_at: fromStripeTimestamp(subscription.start_date) || now,
+      current_period_start: fromStripeTimestamp(subscription.current_period_start),
+      current_period_end: fromStripeTimestamp(subscription.current_period_end),
+      updated_at: now,
+      payment_metadata: subscription.metadata || {}
+    }, { onConflict: 'stripe_subscription_id' })
+
+  if (error) throw error
+
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .update({ subscription_status: getProfileSubscriptionStatus(status), updated_at: now })
     .eq('id', userId)
 
   if (profileError) throw profileError
@@ -222,6 +305,13 @@ export async function handleStripeWebhook(req: Request) {
   try {
     if (event.type === 'checkout.session.completed') {
       await markCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session)
+    } else if (
+      event.type === 'customer.subscription.created' ||
+      event.type === 'customer.subscription.updated'
+    ) {
+      await upsertStripeSubscription(event.data.object as Stripe.Subscription)
+    } else if (event.type === 'customer.subscription.deleted') {
+      await upsertStripeSubscription(event.data.object as Stripe.Subscription, 'canceled')
     }
   } catch (err: any) {
     console.error('[stripe webhook] handler failed:', {
