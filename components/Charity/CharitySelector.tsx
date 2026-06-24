@@ -23,10 +23,10 @@ export default function CharitySelector({ selectedCharity, onSelect, contributio
 
   const contributionOptions = [10, 15, 20, 25, 50]
 
-  if (loading) return <div className="text-center py-8">Loading charities...</div>
+  if (loading) return <div className="text-center py-8 text-slate-700">Loading charities...</div>
   if (charities.length === 0) {
     return (
-      <div className="brutal-card p-6 text-center">
+      <div className="brutal-card p-6 text-center text-slate-950">
         <h2 className="text-xl font-black mb-2">Charities are being prepared</h2>
         <p className="text-muted">
           No charities are available right now. Please check back shortly or contact support.
@@ -39,13 +39,13 @@ export default function CharitySelector({ selectedCharity, onSelect, contributio
     <div className="space-y-6">
       {/* Charity Selection */}
       <div>
-        <label className="block text-sm font-bold mb-3">Choose Your Charity</label>
+        <label className="block text-sm font-bold mb-3 text-slate-800">Choose Your Charity</label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {charities.map((charity) => (
             <div
               key={charity.id}
               onClick={() => onSelect(charity.id)}
-              className={`brutal-card p-6 cursor-pointer transition-all duration-300 hover:scale-105 ${
+              className={`brutal-card p-6 cursor-pointer text-slate-950 transition-all duration-300 hover:scale-105 ${
                 selectedCharity === charity.id
                   ? 'border-4 border-primary bg-primary/10'
                   : 'border-2 border-transparent hover:border-primary/50'
@@ -58,7 +58,7 @@ export default function CharitySelector({ selectedCharity, onSelect, contributio
                   className="h-16 w-auto mx-auto mb-3 object-contain"
                 />
               )}
-              <h3 className="text-lg font-bold text-center mb-2">{charity.name}</h3>
+              <h3 className="text-lg font-bold text-center mb-2 text-slate-950">{charity.name}</h3>
               <p className="text-sm text-muted text-center line-clamp-2">
                 {charity.description}
               </p>
@@ -88,7 +88,7 @@ export default function CharitySelector({ selectedCharity, onSelect, contributio
                 className={`flex-1 py-3 rounded-lg font-bold transition-all duration-300 ${
                   contribution === option
                     ? 'bg-primary text-white scale-105'
-                    : 'bg-surface text-white hover:bg-surface/80'
+                    : 'bg-white text-slate-950 hover:bg-slate-50'
                 }`}
               >
                 {option}%

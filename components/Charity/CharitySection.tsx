@@ -26,14 +26,21 @@ export default function CharitySection() {
     load()
   }, [])
 
-  if (loading) return <div>Loading charities...</div>
+  if (loading) return <div className="text-center text-slate-700">Loading charities...</div>
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {charities.map((c) => (
-        <div key={c.id} className="brutal-card p-6">
-          <h3 className="text-xl font-bold">{c.name}</h3>
-          <p className="text-sm text-muted">{c.description}</p>
+        <div key={c.id} className="brutal-card p-6 text-slate-950">
+          {(c.image_url || c.logo_url) && (
+            <img
+              src={c.image_url || c.logo_url}
+              alt={c.name}
+              className="mb-4 h-14 w-auto max-w-full object-contain"
+            />
+          )}
+          <h3 className="text-xl font-bold text-slate-950">{c.name}</h3>
+          <p className="mt-2 text-sm leading-6 text-muted">{c.description}</p>
         </div>
       ))}
     </div>

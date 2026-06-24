@@ -2,6 +2,29 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../../services/supabaseAdmin'
 import { requireAdmin } from '../../../../../lib/adminUtils'
 
+async function fetchWinner(winnerId: string) {
+  const withAmount = await supabaseAdmin
+    .from('winners')
+    .select('id, amount, prize_amount, payment_status')
+    .eq('id', winnerId)
+    .maybeSingle()
+
+  if (!withAmount.error) return withAmount
+
+  const withoutAmount = await supabaseAdmin
+    .from('winners')
+    .select('id, prize_amount, payment_status')
+    .eq('id', winnerId)
+    .maybeSingle()
+
+  return {
+    ...withoutAmount,
+    data: withoutAmount.data
+      ? { ...withoutAmount.data, amount: withoutAmount.data.prize_amount ?? 0 }
+      : null
+  }
+}
+
 export async function POST(req: Request) {
   const adminCheck = await requireAdmin(req)
   if (adminCheck instanceof NextResponse) return adminCheck
@@ -12,12 +35,9 @@ export async function POST(req: Request) {
     if (!winner_id) return NextResponse.json({ error: 'Missing winner_id' }, { status: 400 })
 
     // Get winner data
-    const { data: winner } = await supabaseAdmin
-      .from('winners')
-      .select('id, amount, payment_status')
-      .eq('id', winner_id)
-      .maybeSingle()
+    const { data: winner, error: winnerError } = await fetchWinner(winner_id)
 
+    if (winnerError) return NextResponse.json({ error: winnerError.message }, { status: 500 })
     if (!winner) return NextResponse.json({ error: 'Winner not found' }, { status: 404 })
     if (winner.payment_status === 'paid') return NextResponse.json({ error: 'Winner already paid' }, { status: 409 })
 

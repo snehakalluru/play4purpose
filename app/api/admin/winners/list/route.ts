@@ -2,26 +2,59 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../../services/supabaseAdmin'
 import { requireAdmin } from '../../../../../lib/adminUtils'
 
+function isMissingColumnError(error: any, column: string) {
+  const message = String(error?.message || '')
+  return message.includes(column) && (
+    message.includes('does not exist') ||
+    message.includes('schema cache') ||
+    message.includes('column')
+  )
+}
+
 async function fetchWinners() {
-  const withPosition = await supabaseAdmin
-    .from('winners')
-    .select('id, draw_id, user_id, position, amount, prize_amount, verification_status, payment_status, proof_url, created_at')
-    .order('created_at', { ascending: false })
+  const attempts = [
+    {
+      select: 'id, draw_id, user_id, position, amount, prize_amount, verification_status, payment_status, proof_url, created_at',
+      normalize: (winner: any) => winner
+    },
+    {
+      select: 'id, draw_id, user_id, position, prize_amount, verification_status, payment_status, proof_url, created_at',
+      normalize: (winner: any) => ({ ...winner, amount: winner.prize_amount ?? 0 })
+    },
+    {
+      select: 'id, draw_id, user_id, amount, prize_amount, verification_status, payment_status, proof_url, created_at',
+      normalize: (winner: any) => ({ ...winner, position: null })
+    },
+    {
+      select: 'id, draw_id, user_id, prize_amount, verification_status, payment_status, proof_url, created_at',
+      normalize: (winner: any) => ({ ...winner, position: null, amount: winner.prize_amount ?? 0 })
+    }
+  ]
 
-  if (!withPosition.error) return withPosition
+  let lastResult: any = null
 
-  if (!withPosition.error.message.includes('position')) return withPosition
+  for (const attempt of attempts) {
+    const result = await supabaseAdmin
+      .from('winners')
+      .select(attempt.select)
+      .order('created_at', { ascending: false })
 
-  console.error('[admin/winners/list] position column missing, falling back:', withPosition.error.message)
-  const withoutPosition = await supabaseAdmin
-    .from('winners')
-    .select('id, draw_id, user_id, amount, prize_amount, verification_status, payment_status, proof_url, created_at')
-    .order('created_at', { ascending: false })
+    if (!result.error) {
+      return {
+        ...result,
+        data: (result.data || []).map(attempt.normalize)
+      }
+    }
 
-  return {
-    ...withoutPosition,
-    data: (withoutPosition.data || []).map((winner: any) => ({ ...winner, position: null }))
+    lastResult = result
+    if (!isMissingColumnError(result.error, 'amount') && !isMissingColumnError(result.error, 'position')) {
+      return result
+    }
+
+    console.error('[admin/winners/list] winners column missing, falling back:', result.error.message)
   }
+
+  return lastResult
 }
 
 export async function GET(req: Request) {

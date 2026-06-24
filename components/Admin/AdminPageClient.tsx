@@ -146,7 +146,7 @@ export default function AdminPageClient() {
               className={`px-4 py-2 rounded-lg font-bold transition-all duration-300 ${
                 activeTab === tab.id
                   ? 'bg-primary text-white'
-                  : 'bg-surface text-white hover:bg-surface/80'
+                  : 'bg-white text-slate-950 border border-black/10 hover:border-primary/40 hover:bg-slate-50'
               }`}
             >
               <span className="mr-2">{tab.icon}</span>

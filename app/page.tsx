@@ -11,19 +11,29 @@ async function getStats() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
+  async function fetchWinnerAmounts() {
+    const amountResult = await supabase.from('winners').select('amount')
+    if (!amountResult.error) return amountResult.data || []
+
+    const prizeAmountResult = await supabase.from('winners').select('prize_amount')
+    if (!prizeAmountResult.error) return prizeAmountResult.data || []
+
+    return []
+  }
+
   const [
     { count: totalPlayers },
     { count: totalScores },
-    { data: winners },
+    winners,
     { data: charities }
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('scores').select('*', { count: 'exact', head: true }),
-    supabase.from('winners').select('amount'),
+    fetchWinnerAmounts(),
     supabase.from('charities').select('*')
   ])
 
-  const totalRaised = winners?.reduce((sum, w) => sum + (w.amount || 0), 0) || 0
+  const totalRaised = winners?.reduce((sum, w: any) => sum + Number(w.amount ?? w.prize_amount ?? 0), 0) || 0
 
   return {
     totalPlayers: totalPlayers || 0,
@@ -38,20 +48,20 @@ export default async function HomePage() {
   const stats = await getStats()
 
   return (
-    <div className="min-h-screen bg-background text-white overflow-hidden">
-      <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-background/90 backdrop-blur">
+    <div className="min-h-screen bg-background text-slate-950 overflow-hidden">
+      <header className="fixed left-0 right-0 top-0 z-50 border-b border-black/10 bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-black uppercase tracking-tight">
             Play4Purpose
           </Link>
           <nav className="flex items-center gap-3">
-            <Link href="#charities" className="hidden text-sm font-bold text-muted hover:text-white sm:inline">
+            <Link href="#charities" className="hidden text-sm font-bold text-muted hover:text-primary sm:inline">
               Charities
             </Link>
-            <Link href="#how-it-works" className="hidden text-sm font-bold text-muted hover:text-white sm:inline">
+            <Link href="#how-it-works" className="hidden text-sm font-bold text-muted hover:text-primary sm:inline">
               How It Works
             </Link>
-            <Link href="/login" className="rounded-full border-2 border-white/20 px-4 py-2 text-sm font-bold hover:border-primary">
+            <Link href="/login" className="rounded-full border-2 border-black/10 bg-white/70 px-4 py-2 text-sm font-bold text-slate-950 hover:border-primary">
               Login
             </Link>
             <Link href="/register" className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary/90">
@@ -64,11 +74,11 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(23,111,77,0.18),transparent_38%),linear-gradient(180deg,#fbfff8_0%,#f4f7f1_58%,#eaf0e5_100%)]" />
 
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border-2 border-primary mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 border border-primary/30 text-slate-950 shadow-sm mb-8 animate-fade-in">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
@@ -102,7 +112,7 @@ export default async function HomePage() {
             </Link>
             <Link
               href="#how-it-works"
-              className="px-8 py-4 bg-surface text-white font-bold text-lg rounded-full border-2 border-white/20 hover:border-primary hover:scale-105 transition-all duration-300"
+              className="px-8 py-4 bg-white text-slate-950 font-bold text-lg rounded-full border-2 border-black/10 hover:border-primary hover:scale-105 transition-all duration-300 shadow-sm"
             >
               See How It Works
             </Link>
@@ -112,7 +122,7 @@ export default async function HomePage() {
               Register for your free trial
             </Link>
             <span className="hidden sm:inline">|</span>
-            <Link href="/login" className="font-bold text-white hover:text-primary">
+            <Link href="/login" className="font-bold text-slate-950 hover:text-primary">
               Existing player login
             </Link>
           </div>
