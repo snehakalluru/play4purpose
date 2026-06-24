@@ -95,7 +95,7 @@ export default function ScoresPage() {
     const token = session.access_token
     const userId = session.user.id
 
-    const res = await fetch('/api/scores/add', {
+    const res = await fetch('/api/scores', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
