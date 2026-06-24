@@ -23,21 +23,20 @@ export default function EnhancedScoreForm({ onSubmit, loading }: { onSubmit: (sc
   }
 
   const getScoreEmoji = (s: number) => {
-    if (s < 80) return '🏆'
-    if (s < 90) return '⭐'
-    if (s < 100) return '👍'
-    if (s < 110) return '😊'
-    if (s < 120) return '🙂'
-    return '💪'
+  if (s <= 10) return '😢'
+  if (s <= 20) return '😐'
+  if (s <= 30) return '🙂'
+  if (s <= 40) return '🔥'
+  return '🏆'
   }
 
   const getScoreColor = (s: number) => {
-    if (s < 80) return 'text-green-400'
-    if (s < 90) return 'text-blue-400'
-    if (s < 100) return 'text-yellow-400'
-    if (s < 110) return 'text-orange-400'
-    return 'text-red-400'
-  }
+  if (s <= 10) return 'text-red-400'
+  if (s <= 20) return 'text-orange-400'
+  if (s <= 30) return 'text-yellow-400'
+  if (s <= 40) return 'text-blue-400'
+  return 'text-green-400'
+}
 
   return (
     <div className={`brutal-card p-8 transition-all duration-500 ${animateIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
