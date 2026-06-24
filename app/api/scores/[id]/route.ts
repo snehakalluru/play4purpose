@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../services/supabaseAdmin'
-import { getSubscriptionAccess } from '../../../../lib/subscriptionAccess'
 import { scoreSchema } from '../../../../validators/score'
 
 function invalid(message: string, status = 400) {
@@ -17,8 +16,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (userErr || !userResp?.user) return invalid('Invalid token', 401)
 
     const userId = userResp.user.id
-    const access = await getSubscriptionAccess(userId)
-    if (!access.allowed) return invalid(access.reason || 'Active subscription required', 403)
 
     const body = await req.json()
     const parsed = scoreSchema.safeParse(body)
@@ -54,10 +51,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       })
       .eq('id', id)
       .eq('user_id', userId)
-      .select()
+      .select('id,user_id,score_value,score_date,created_at')
       .maybeSingle()
 
-    if (error) return invalid(error.message, 500)
+    if (error) {
+      console.error('[scores/:id] Update failed:', error.message)
+      return invalid('Failed to update score', 500)
+    }
     if (!data) return invalid('Score not found or access denied', 404)
 
     return NextResponse.json({ ok: true, success: true, data })
@@ -76,8 +76,6 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     if (userErr || !userResp?.user) return invalid('Invalid token', 401)
 
     const userId = userResp.user.id
-    const access = await getSubscriptionAccess(userId)
-    if (!access.allowed) return invalid(access.reason || 'Active subscription required', 403)
 
     const { id } = await params
 
@@ -86,10 +84,13 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       .delete()
       .eq('id', id)
       .eq('user_id', userId)
-      .select()
+      .select('id')
       .maybeSingle()
 
-    if (error) return invalid(error.message, 500)
+    if (error) {
+      console.error('[scores/:id] Delete failed:', error.message)
+      return invalid('Failed to delete score', 500)
+    }
     if (!data) return invalid('Score not found or access denied', 404)
 
     return NextResponse.json({ ok: true, success: true, message: 'Score deleted successfully' })

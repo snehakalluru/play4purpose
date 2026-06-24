@@ -3,10 +3,11 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../../services/supabaseClient'
 import AdminUsersPanel from './AdminUsersPanel'
 import AdminDrawsPanel from './AdminDrawsPanel'
+import AdminScoresPanel from './AdminScoresPanel'
 import AdminWinnersPanel from './AdminWinnersPanel'
 import AdminPayoutsPanel from './AdminPayoutsPanel'
 
-type Tab = 'overview' | 'users' | 'draws' | 'winners' | 'payouts' | 'charities'
+type Tab = 'overview' | 'users' | 'scores' | 'draws' | 'winners' | 'payouts' | 'charities'
 
 export default function AdminPageClient() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -89,6 +90,7 @@ export default function AdminPageClient() {
   const tabs = [
     { id: 'overview' as Tab, label: 'Overview', icon: '📊' },
     { id: 'users' as Tab, label: 'Users', icon: '👥' },
+    { id: 'scores' as Tab, label: 'Scores', icon: 'S' },
     { id: 'draws' as Tab, label: 'Draws', icon: '🎰' },
     { id: 'winners' as Tab, label: 'Winners', icon: '🏆' },
     { id: 'payouts' as Tab, label: 'Payouts', icon: '💰' },
@@ -181,6 +183,7 @@ export default function AdminPageClient() {
           )}
 
           {activeTab === 'users' && <AdminUsersPanel />}
+          {activeTab === 'scores' && <AdminScoresPanel />}
           {activeTab === 'draws' && <AdminDrawsPanel />}
           {activeTab === 'winners' && <AdminWinnersPanel />}
           {activeTab === 'payouts' && <AdminPayoutsPanel />}
