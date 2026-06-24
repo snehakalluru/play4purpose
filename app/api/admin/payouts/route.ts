@@ -3,23 +3,52 @@ import { supabaseAdmin } from '../../../../services/supabaseAdmin'
 import { requireAdmin } from '../../../../lib/adminUtils'
 
 export async function GET(req: Request) {
-  const adminCheck = await requireAdmin()
+  const adminCheck = await requireAdmin(req)
   if (adminCheck instanceof NextResponse) return adminCheck
 
-  const { data, error } = await supabaseAdmin.from('payouts').select('*').order('created_at', { ascending: false })
-  if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true, payouts: data })
-}
+  try {
+    const { data: payouts, error } = await supabaseAdmin
+      .from('payouts')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-export async function PATCH(req: Request) {
-  const adminCheck = await requireAdmin()
-  if (adminCheck instanceof NextResponse) return adminCheck
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const body = await req.json()
-  const { payout_id, status } = body || {}
-  if (!payout_id || !status) return NextResponse.json({ success: false, error: 'payout_id and status required' }, { status: 400 })
+    const winnerIds = [...new Set((payouts || []).map((payout: any) => payout.winner_id).filter(Boolean))]
+    const { data: winners } = winnerIds.length
+      ? await supabaseAdmin.from('winners').select('id, amount, prize_amount, user_id').in('id', winnerIds)
+      : { data: [] }
 
-  const { error } = await supabaseAdmin.from('payouts').update({ status }).eq('id', payout_id)
-  if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
+    const userIds = [...new Set((winners || []).map((winner: any) => winner.user_id).filter(Boolean))]
+    const { data: profiles } = userIds.length
+      ? await supabaseAdmin.from('profiles').select('id, full_name').in('id', userIds)
+      : { data: [] }
+    const { data: authUsers } = userIds.length
+      ? await supabaseAdmin.auth.admin.listUsers()
+      : { data: { users: [] } }
+
+    const profilesById = new Map((profiles || []).map((profile: any) => [profile.id, profile]))
+    const emailsById = new Map((authUsers?.users || []).map((u) => [u.id, u.email || null]))
+    const winnersById = new Map((winners || []).map((winner: any) => [
+      winner.id,
+      {
+        ...winner,
+        amount: winner.amount ?? winner.prize_amount ?? 0,
+        profile: {
+          ...(profilesById.get(winner.user_id) || {}),
+          email: emailsById.get(winner.user_id) || null
+        }
+      }
+    ]))
+
+    const normalizedPayouts = (payouts || []).map((payout: any) => ({
+      ...payout,
+      transaction_reference: payout.transaction_reference || payout.payment_reference || null,
+      winner: winnersById.get(payout.winner_id) || null
+    }))
+
+    return NextResponse.json({ payouts: normalizedPayouts })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }

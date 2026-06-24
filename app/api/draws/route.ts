@@ -1,6 +1,39 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../services/supabaseAdmin'
 
+async function ensureDrawExists(createdBy: string) {
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from('draws')
+    .select('*')
+    .order('draw_date', { ascending: false })
+    .limit(1)
+
+  if (existingError || (existing && existing.length > 0)) {
+    return { error: existingError }
+  }
+
+  const now = new Date()
+  const drawName = `Monthly Draw - ${now.toLocaleString('default', { month: 'long', year: 'numeric' })}`
+  const drawDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
+    .toISOString()
+    .slice(0, 10)
+
+  const { error } = await supabaseAdmin
+    .from('draws')
+    .insert({
+      name: drawName,
+      draw_date: drawDate,
+      status: 'scheduled',
+      prize_pool: 0,
+      jackpot_amount: 0,
+      second_prize: 0,
+      third_prize: 0,
+      created_by: createdBy
+    })
+
+  return { error }
+}
+
 export async function GET(req: Request) {
   try {
     const authHeader = req.headers.get('authorization')
@@ -14,13 +47,23 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 50)
 
-    const { data: draws, error } = await supabaseAdmin
-      .from('draws')
-      .select('*')
-      .order('draw_date', { ascending: false })
-      .limit(limit)
+    try {
+      await ensureDrawExists(userId)
+    } catch (e) {
+      // Ignore draw creation errors
+    }
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    let draws: any[] = []
+    try {
+      const result = await supabaseAdmin
+        .from('draws')
+        .select('*')
+        .order('draw_date', { ascending: false })
+        .limit(limit)
+      draws = result.data || []
+    } catch (e) {
+      // Return empty draws on error
+    }
 
     // For each draw, check if user has an entry
     const drawsWithEntry = await Promise.all((draws || []).map(async (draw: any) => {

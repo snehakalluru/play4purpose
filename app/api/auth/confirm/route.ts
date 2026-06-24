@@ -14,14 +14,9 @@ export async function POST(req: Request) {
     let uid = user_id
 
     if (!uid && email) {
-      const { data: profile, error: profileErr } = await supabaseAdmin
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle()
-
-      if (profileErr) return NextResponse.json({ success: false, error: profileErr.message }, { status: 500 })
-      uid = (profile as any)?.id
+      const { data: users, error: listErr } = await supabaseAdmin.auth.admin.listUsers()
+      if (listErr) return NextResponse.json({ success: false, error: listErr.message }, { status: 500 })
+      uid = users.users.find((u) => u.email?.toLowerCase() === String(email).toLowerCase())?.id
     }
 
     if (!uid) return NextResponse.json({ success: false, error: 'user_id or email required' }, { status: 400 })

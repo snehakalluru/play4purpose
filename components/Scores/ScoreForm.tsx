@@ -15,7 +15,7 @@ export default function ScoreForm() {
     setError(null)
     setSuccess(false)
     if (score === '' || !playedDate) return setError('Score and date are required')
-    if (!Number.isInteger(score) || score < 40 || score > 200) return setError('Score must be between 40 and 200')
+    if (!Number.isInteger(score) || score < 1 || score > 45) return setError('Score must be between 1 and 45')
 
     setLoading(true)
     const res = await submitScore({ score: Number(score), played_date: playedDate })
@@ -36,11 +36,11 @@ export default function ScoreForm() {
         {error && <div className="p-2 bg-red-500 text-white font-bold text-sm border-2 border-black">{error}</div>}
         {success && <div className="p-2 bg-green-500 text-white font-bold text-sm border-2 border-black">Score saved!</div>}
         <div>
-          <label className="block text-sm font-bold uppercase mb-1">Score (40–200)</label>
+        <label className="block text-sm font-bold uppercase mb-1">Score (1-45)</label>
           <input
             type="number"
-            min={40}
-            max={200}
+            min={1}
+            max={45}
             value={score as any}
             onChange={(e) => setScore(e.target.value === '' ? '' : Number(e.target.value))}
             className="w-full px-3 py-2 border-2 border-black rounded-md bg-white text-black font-bold"
@@ -72,13 +72,13 @@ export default function ScoreForm() {
           <ul className="space-y-1">
             {latest.map((s: any) => (
               <li key={s.id} className="flex justify-between text-sm font-bold">
-                <span>Round: {s.score}</span>
+                <span>Round: {s.score_value ?? s.score}</span>
                 <span className="text-muted">{new Date(s.played_date || s.score_date).toLocaleDateString()}</span>
               </li>
             ))}
           </ul>
           <div className="mt-2 p-2 bg-accent/20 border-2 border-black font-black text-sm">
-            Average: {(latest.reduce((sum: number, s: any) => sum + s.score, 0) / latest.length).toFixed(1)}
+            Average: {(latest.reduce((sum: number, s: any) => sum + (s.score_value ?? s.score ?? 0), 0) / latest.length).toFixed(1)}
           </div>
         </div>
       )}

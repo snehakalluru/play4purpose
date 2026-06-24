@@ -1,17 +1,51 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { supabase } from '../../services/supabaseClient'
 import { useRouter } from 'next/navigation'
 
 export default function LoginForm() {
   const router = useRouter()
+  const submitGuard = useRef(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  async function persistSession(session: any) {
+    if (!session?.access_token) return
+
+    await fetch('/api/auth/set-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session })
+    })
+  }
+
+  async function redirectForRole() {
+    // Validate session exists before routing
+    const { data: after } = await supabase.auth.getSession()
+    if (!after?.session) {
+      router.replace('/dashboard')
+      return
+    }
+
+    const roleRes = await fetch('/api/auth/role', {
+      headers: { Authorization: `Bearer ${after.session.access_token}` }
+    })
+
+    if (!roleRes.ok) {
+      router.replace('/dashboard')
+      return
+    }
+
+    const roleJson = await roleRes.json()
+    router.replace(roleJson?.role === 'admin' ? '/admin' : '/dashboard')
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (submitGuard.current || loading) return
+    submitGuard.current = true
     setError(null)
     setLoading(true)
     try {
@@ -37,11 +71,17 @@ export default function LoginForm() {
               return
             }
 
-            const { error: retryError } = await supabase.auth.signInWithPassword({ email, password })
+            const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({ email, password })
             if (retryError) {
               setError(retryError.message)
             } else {
-              router.push('/dashboard')
+              await persistSession((retryData as any)?.session)
+              const { data: after, error: afterErr } = await supabase.auth.getSession()
+              if (afterErr || !after?.session) {
+                setError('Login succeeded but session was not found. Please try again.')
+                return
+              }
+              await redirectForRole()
             }
             return
           } catch (e: any) {
@@ -56,17 +96,13 @@ export default function LoginForm() {
         // Persist session server-side so middleware can see it
         try {
           const session = (signInData as any)?.session
-          if (session) {
-            await fetch('/api/auth/set-session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ session })
-            })
-          }
+          await persistSession(session)
+          await redirectForRole()
+          return
         } catch (e) {
           console.warn('Failed to set session cookie', e)
+          router.replace('/dashboard')
         }
-        router.push('/dashboard')
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred')

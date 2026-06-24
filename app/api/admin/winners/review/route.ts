@@ -1,18 +1,12 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../../services/supabaseAdmin'
+import { requireAdmin } from '../../../../../lib/adminUtils'
 
 export async function POST(req: Request) {
+  const adminCheck = await requireAdmin(req)
+  if (adminCheck instanceof NextResponse) return adminCheck
+
   try {
-    const authHeader = req.headers.get('authorization')
-    if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const token = authHeader.replace('Bearer ', '')
-
-    const { data: userResp, error: userErr } = await supabaseAdmin.auth.getUser(token)
-    if (userErr || !userResp?.user) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-
-    const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', userResp.user.id).single()
-    if (!profile || profile.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
     const body = await req.json()
     const { winner_id, action } = body
     if (!winner_id || !['approve', 'reject'].includes(action)) return NextResponse.json({ error: 'Invalid input: need winner_id and action (approve|reject)' }, { status: 400 })
@@ -23,7 +17,7 @@ export async function POST(req: Request) {
       .from('winners')
       .update({
         verification_status: newStatus,
-        verified_by: userResp.user.id,
+        verified_by: adminCheck,
         verified_at: new Date().toISOString()
       })
       .eq('id', winner_id)
@@ -32,7 +26,7 @@ export async function POST(req: Request) {
 
     // Audit log
     await supabaseAdmin.from('audit_logs').insert({
-      user_id: userResp.user.id,
+      user_id: adminCheck,
       action: `${action}_winner`,
       entity_type: 'winner',
       entity_id: winner_id,

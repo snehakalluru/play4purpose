@@ -4,12 +4,11 @@ import { supabaseAdmin } from '../../../../services/supabaseAdmin'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { user_id, email, full_name } = body
+    const { user_id, full_name } = body
     if (!user_id) return NextResponse.json({ success: false, error: 'Missing user_id' }, { status: 400 })
 
     const payload = {
       id: user_id,
-      email: email || null,
       full_name: full_name || null,
       created_at: new Date().toISOString()
     }

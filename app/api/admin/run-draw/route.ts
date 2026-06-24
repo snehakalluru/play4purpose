@@ -2,134 +2,112 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../services/supabaseAdmin'
 import { requireAdmin } from '../../../../lib/adminUtils'
 
+function secureRandomInt(max: number) {
+  if (max <= 0) return 0
+  const values = new Uint32Array(1)
+  crypto.getRandomValues(values)
+  return values[0] % max
+}
+
+function pickUniqueWinners(userIds: string[], count: number) {
+  const pool = [...userIds]
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = secureRandomInt(i + 1)
+    const current = pool[i]
+    pool[i] = pool[j]
+    pool[j] = current
+  }
+  return pool.slice(0, count)
+}
+
 export async function POST(req: Request) {
-  const adminCheck = await requireAdmin()
+  const adminCheck = await requireAdmin(req)
   if (adminCheck instanceof NextResponse) return adminCheck
 
-  const body = await req.json()
-  const { draw_id, winners_count = 3 } = body || {}
-  if (!draw_id) return NextResponse.json({ success: false, error: 'draw_id required' }, { status: 400 })
-
-  // Pick winners randomly from scores (simple approach)
-  const { data: entries, error: entriesErr } = await supabaseAdmin.from('scores').select('user_id, score').order('random', { ascending: true }).limit(winners_count)
-  if (entriesErr) return NextResponse.json({ success: false, error: entriesErr.message }, { status: 500 })
-
-  const winners = (entries || []).map((e: any) => ({ user_id: e.user_id, draw_id, prize: 0 }))
-
-  // Insert winners and mark draw completed
-  const { error: insertErr } = await supabaseAdmin.from('winners').insert(winners)
-  if (insertErr) return NextResponse.json({ success: false, error: insertErr.message }, { status: 500 })
-
-  const { error: updateErr } = await supabaseAdmin.from('draws').update({ status: 'completed' }).eq('id', draw_id)
-  if (updateErr) return NextResponse.json({ success: false, error: updateErr.message }, { status: 500 })
-
-  return NextResponse.json({ success: true, winners })
-}
-import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../../services/supabaseAdmin'
-
-function randomNumbers(count = 5, max = 45) {
-  const set = new Set<number>()
-  while (set.size < count) {
-    set.add(Math.floor(Math.random() * max) + 1)
-  }
-  return Array.from(set).sort((a, b) => a - b).map(String)
-}
-
-export async function POST(req: Request) {
   try {
-    const authHeader = req.headers.get('authorization')
-    if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const token = authHeader.replace('Bearer ', '')
+    // Get all eligible users (have scores)
+    const { data: usersWithScores, error: scoresError } = await supabaseAdmin
+      .from('scores')
+      .select('user_id')
+      .order('score_date', { ascending: false })
 
-    // Verify user and role
-    const { data: userResp, error: userErr } = await supabaseAdmin.auth.getUser(token)
-    if (userErr || !userResp?.user) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-    const userId = userResp.user.id
+    if (scoresError) return NextResponse.json({ error: scoresError.message }, { status: 500 })
 
-    const { data: profileRows } = await supabaseAdmin.from('profiles').select('role').eq('id', userId).limit(1).single()
-    if (!profileRows || profileRows.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    // Get unique user IDs
+    const uniqueUserIds = [...new Set((usersWithScores || []).map(s => s.user_id))]
+
+    if (uniqueUserIds.length < 3) {
+      return NextResponse.json({ error: 'Not enough participants (need at least 3)' }, { status: 400 })
+    }
+
+    // Randomly select 3 unique winners with cryptographic entropy.
+    const [first, second, third] = pickUniqueWinners(uniqueUserIds, 3)
 
     // Create draw
-    const winning_numbers = randomNumbers()
-    const draw_month = new Date()
-    draw_month.setDate(1)
-    const drawPayload = {
-      draw_month: draw_month.toISOString().slice(0, 10),
-      mode: 'random',
-      status: 'published',
-      winning_numbers: JSON.stringify(winning_numbers),
-      jackpot_amount: 0
-    }
+    const { data: draw, error: drawError } = await supabaseAdmin
+      .from('draws')
+      .insert({
+        name: `Monthly Draw - ${new Date().toLocaleDateString()}`,
+        draw_date: new Date().toISOString().split('T')[0],
+        status: 'completed',
+        prize_pool: 1000,
+        jackpot_amount: 400,
+        second_prize: 350,
+        third_prize: 250,
+        created_by: adminCheck
+      })
+      .select()
+      .maybeSingle()
 
-    const { data: drawData, error: drawErr } = await supabaseAdmin.from('draws').insert(drawPayload).select('id').limit(1).single()
-    if (drawErr || !drawData) return NextResponse.json({ error: drawErr?.message || 'Failed to create draw' }, { status: 500 })
-    const drawId = drawData.id
+    if (drawError) return NextResponse.json({ error: drawError.message }, { status: 500 })
+    if (!draw) return NextResponse.json({ error: 'Failed to create draw' }, { status: 500 })
 
-    // Simple prize pool: static or summed donations (fallback to static)
-    let totalPool = 1000.0
-    const { data: donations } = await supabaseAdmin.from('donations').select('amount').filter('status', 'eq', 'pending')
-    if (donations && donations.length) {
-      totalPool = donations.reduce((s: number, r: any) => s + parseFloat(r.amount || 0), 0)
-    }
+    // Create winners
+    const winners = [
+      { draw_id: draw.id, user_id: first, position: 1, amount: 400 },
+      { draw_id: draw.id, user_id: second, position: 2, amount: 350 },
+      { draw_id: draw.id, user_id: third, position: 3, amount: 250 }
+    ]
 
-    const pool5 = +(totalPool * 0.4).toFixed(2)
-    const pool4 = +(totalPool * 0.35).toFixed(2)
-    const pool3 = +(totalPool * 0.25).toFixed(2)
+    const { error: winnersError } = await supabaseAdmin
+      .from('winners')
+      .insert(winners)
 
-    await supabaseAdmin.from('prize_pools').insert({ draw_id: drawId, total_pool: totalPool, pool_5_match: pool5, pool_4_match: pool4, pool_3_match: pool3, rollover_amount: 0 })
+    if (winnersError) return NextResponse.json({ error: winnersError.message }, { status: 500 })
 
-    // Build entries: for every user create a random entry (minimal simulation)
-    const { data: users } = await supabaseAdmin.from('profiles').select('id').neq('role', 'admin')
-    if (!users) return NextResponse.json({ error: 'No users found' }, { status: 400 })
+    // Create payouts
+    // Get winner IDs
+    const { data: createdWinners } = await supabaseAdmin
+      .from('winners')
+      .select('id, user_id, position')
+      .eq('draw_id', draw.id)
 
-    const entries: any[] = []
-    const winnersToCreate: any[] = []
+    const payoutRecords = (createdWinners || []).map(w => ({
+      winner_id: w.id,
+      amount: w.position === 1 ? 400 : w.position === 2 ? 350 : 250,
+      status: 'pending'
+    }))
 
-    for (const u of users) {
-      const numbers = randomNumbers()
-      const matchCount = numbers.filter((n) => winning_numbers.includes(n)).length
-      entries.push({ draw_id: drawId, user_id: u.id, numbers: JSON.stringify(numbers), match_count: matchCount })
-      if (matchCount >= 3) {
-        winnersToCreate.push({ draw_id: drawId, user_id: u.id, match_count: matchCount })
-      }
-    }
+    const { error: payoutsError } = await supabaseAdmin
+      .from('payouts')
+      .insert(payoutRecords)
 
-    // Bulk insert entries
-    if (entries.length) {
-      await supabaseAdmin.from('draw_entries').insert(entries)
-    }
+    if (payoutsError) return NextResponse.json({ error: payoutsError.message }, { status: 500 })
 
-    // Create winner rows with placeholder amounts and status 'approved'
-    if (winnersToCreate.length) {
-      const winnersInsert = winnersToCreate.map((w) => ({ draw_id: drawId, user_id: w.user_id, prize_amount: 0, match_count: w.match_count, status: 'approved' }))
-      await supabaseAdmin.from('winners').insert(winnersInsert)
+    // Audit log
+    await supabaseAdmin.from('audit_logs').insert({
+      user_id: adminCheck,
+      action: 'run_draw',
+      entity_type: 'draw',
+      entity_id: draw.id,
+      metadata: { winners: [first, second, third] }
+    })
 
-      // Call DB function to calculate prize distribution
-      const { data: distData, error: distErr } = await supabaseAdmin.rpc('calculate_prize_distribution', { draw_uuid: drawId })
-      if (distErr) {
-        // Log but continue
-        console.warn('Distribution RPC error', distErr)
-      }
-
-      // distData may be returned as an array depending on driver
-      const distribution = Array.isArray(distData) ? distData[0] : distData
-
-      // Persist rollover amount back to prize_pools
-      const rollover = distribution?.rollover ?? 0
-      await supabaseAdmin.from('prize_pools').update({ rollover_amount: rollover }).eq('draw_id', drawId)
-
-      // Update winners' prize_amount based on allocations per-tier
-      const alloc5 = distribution?.allocations?.['5_match'] ?? null
-      const alloc4 = distribution?.allocations?.['4_match'] ?? null
-      const alloc3 = distribution?.allocations?.['3_match'] ?? null
-
-      if (alloc5 !== null) await supabaseAdmin.from('winners').update({ prize_amount: alloc5 }).eq('draw_id', drawId).eq('match_count', 5).eq('status', 'approved')
-      if (alloc4 !== null) await supabaseAdmin.from('winners').update({ prize_amount: alloc4 }).eq('draw_id', drawId).eq('match_count', 4).eq('status', 'approved')
-      if (alloc3 !== null) await supabaseAdmin.from('winners').update({ prize_amount: alloc3 }).eq('draw_id', drawId).eq('match_count', 3).eq('status', 'approved')
-    }
-
-    return NextResponse.json({ ok: true, draw_id: drawId, winning_numbers, totalPool })
+    return NextResponse.json({
+      success: true,
+      draw,
+      winners: createdWinners
+    })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

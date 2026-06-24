@@ -33,17 +33,10 @@ async function getEligibleUserIds(): Promise<{ ids: string[]; count: number }> {
   // Fallback: manual query
   const { data: subs } = await supabaseAdmin
     .from('subscriptions')
-    .select('user_id')
-    .eq('status', 'active')
+    .select('user_id,status')
+    .in('status', ['active', 'trial_active'])
   if (!subs || subs.length === 0) return { ids: [], count: 0 }
   const subUserIds = subs.map(s => s.user_id)
-
-  const { data: charityUsers } = await supabaseAdmin
-    .from('user_charities')
-    .select('user_id')
-    .in('user_id', subUserIds)
-  if (!charityUsers || charityUsers.length === 0) return { ids: [], count: 0 }
-  const charitySet = new Set(charityUsers.map(c => c.user_id))
 
   const { data: allScores } = await supabaseAdmin
     .from('scores')
@@ -56,7 +49,7 @@ async function getEligibleUserIds(): Promise<{ ids: string[]; count: number }> {
   }
 
   const eligibleIds = Object.entries(userScoreCount)
-    .filter(([uid, count]) => count >= 5 && charitySet.has(uid))
+    .filter(([uid, count]) => count >= 5)
     .map(([uid]) => uid)
 
   return { ids: eligibleIds, count: eligibleIds.length }
@@ -76,13 +69,13 @@ export async function POST(req: Request) {
       .from('profiles')
       .select('role')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
     if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     // 1. Find eligible users
     const { ids: eligibleUserIds, count: activeCount } = await getEligibleUserIds()
     if (eligibleUserIds.length === 0) {
-      return NextResponse.json({ error: 'No eligible users found (need active subscription, charity selected, 5+ scores)' }, { status: 400 })
+      return NextResponse.json({ error: 'No eligible users found (need active subscription and 5+ scores)' }, { status: 400 })
     }
 
     // 2. Create draw
@@ -93,7 +86,7 @@ export async function POST(req: Request) {
       .from('draws')
       .insert({ name: drawName, draw_date: drawDate, status: 'running', created_by: userId })
       .select('*')
-      .single()
+      .maybeSingle()
 
     if (drawErr || !draw) return NextResponse.json({ error: 'Failed to create draw: ' + (drawErr?.message || '') }, { status: 500 })
 

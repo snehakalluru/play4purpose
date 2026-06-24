@@ -14,12 +14,11 @@ export default function DrawsPage() {
   }, [])
 
   async function loadDraws() {
-    const { data } = await supabase.auth.getUser()
-    const user = (data as any)?.user
-    if (!user) return router.push('/login')
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return router.push('/login')
 
     const res = await fetch('/api/draws', {
-      headers: { Authorization: `Bearer ${(data as any).session?.access_token}` }
+      headers: { Authorization: `Bearer ${session.access_token}` }
     })
     const json = await res.json()
     if (json.ok) setDraws(json.data || [])
@@ -28,13 +27,12 @@ export default function DrawsPage() {
 
   async function enterDraw(drawId: string) {
     setEntering(drawId)
-    const { data } = await supabase.auth.getUser()
-    const token = (data as any)?.session?.access_token
-    if (!token) return router.push('/login')
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return router.push('/login')
 
     const res = await fetch('/api/draws/enter', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({})
     })
     const json = await res.json()

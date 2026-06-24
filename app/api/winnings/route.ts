@@ -12,25 +12,15 @@ export async function GET(req: Request) {
 
     const userId = userResp.user.id
 
-    const { data: winners, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('winners')
-      .select(`
-        id,
-        draw_id,
-        position,
-        amount,
-        verification_status,
-        payment_status,
-        proof_url,
-        created_at,
-        draw:draws!inner(name, draw_date, status)
-      `)
+      .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    return NextResponse.json({ ok: true, data: winners || [] })
+    return NextResponse.json({ ok: true, data: data || [] })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

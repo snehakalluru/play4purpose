@@ -5,24 +5,36 @@ import { supabase } from '../../services/supabaseClient'
 export default function AdminWinnersPanel() {
   const [winners, setWinners] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   async function fetchWinners() {
     setLoading(true)
-    const { data } = await supabase.auth.getUser()
-    const token = (data as any)?.session?.access_token
-    if (!token) return
+    setError(null)
 
-    const res = await fetch('/api/admin/winners/list', { headers: { Authorization: `Bearer ${token}` } })
-    const json = await res.json()
-    if (res.ok) setWinners(json.winners || [])
-    setLoading(false)
+    try {
+      const { data } = await supabase.auth.getSession()
+      const token = data.session?.access_token
+      if (!token) {
+        setError('Admin session not found. Please sign in again.')
+        return
+      }
+
+      const res = await fetch('/api/admin/winners/list', { headers: { Authorization: `Bearer ${token}` } })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'Failed to load winners')
+      setWinners(json.winners || [])
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load winners')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { fetchWinners() }, [])
 
   async function review(winnerId: string, action: 'approve' | 'reject') {
-    const { data } = await supabase.auth.getUser()
-    const token = (data as any)?.session?.access_token
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
     if (!token) return
 
     const res = await fetch('/api/admin/winners/review', {
@@ -36,8 +48,8 @@ export default function AdminWinnersPanel() {
   }
 
   async function payout(winnerId: string) {
-    const { data } = await supabase.auth.getUser()
-    const token = (data as any)?.session?.access_token
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
     if (!token) return
 
     const paymentMethod = prompt('Enter payment method (bank_transfer, paypal, etc.):') || 'bank_transfer'
@@ -53,6 +65,7 @@ export default function AdminWinnersPanel() {
   }
 
   if (loading) return <div>Loading winners...</div>
+  if (error) return <div className="brutal-card p-6 text-red-400">{error}</div>
 
   return (
     <div className="space-y-4">

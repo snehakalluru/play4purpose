@@ -3,7 +3,9 @@ export interface Charity {
   name: string
   description?: string | null
   website?: string | null
+  image_url?: string | null
   logo_url?: string | null
-  active: boolean
+  events?: Record<string, any> | null
+  active?: boolean
   created_at: string
 }

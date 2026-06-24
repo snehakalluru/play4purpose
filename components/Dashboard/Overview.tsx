@@ -26,8 +26,8 @@ export default function DashboardOverview({ data }: { data: any }) {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-muted">Status:</span>
-            <span className={`brutal-badge ${data?.subscription?.status === 'active' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-black'}`}>
-              {data?.subscription?.status ?? 'inactive'}
+            <span className={`brutal-badge ${data?.subscription?.status === 'expired' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+              {data?.subscription?.status ?? 'trial_active'}
             </span>
           </div>
           <div className="flex justify-between">
@@ -41,7 +41,7 @@ export default function DashboardOverview({ data }: { data: any }) {
             </div>
           )}
         </div>
-        {data?.subscription?.status !== 'active' && (
+        {data?.subscription?.status === 'expired' && (
           <a href="/onboarding/plan" className="brutal-btn brutal-btn-primary mt-4 inline-block">
             Subscribe Now
           </a>

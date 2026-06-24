@@ -1,5 +1,6 @@
 'use client'
-import React, { useState } from 'react'
+
+import React, { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../services/supabaseClient'
 
@@ -7,54 +8,81 @@ export default function RegisterForm() {
   const router = useRouter()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
+  const submitGuard = useRef(false)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (submitGuard.current || loading) return
+    submitGuard.current = true
+
     setError(null)
     setSuccess(false)
 
-    // Client-side validation
     if (password !== confirmPassword) {
       setError('Passwords do not match')
       return
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+    if (!termsAccepted || !privacyAccepted) {
+      setError('Please accept the terms and privacy policy to continue')
       return
     }
 
     setLoading(true)
 
     try {
-      // Use server-side register endpoint which creates a confirmed user (no email verification)
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name: fullName })
+        body: JSON.stringify({
+          email,
+          password,
+          full_name: fullName,
+          phone: phone || undefined,
+          privacy_accepted: privacyAccepted,
+          terms_accepted: termsAccepted
+        })
       })
-      const payload = await res.json()
-      if (!res.ok || !payload.success) {
-        console.error('Server registration error:', payload)
-        setError(payload.error || 'Failed to register')
-        setLoading(false)
+
+      const payload = await res.json().catch(() => null)
+      if (!res.ok || !payload?.success) {
+        setError(payload?.message || `Failed to register (${res.status})`)
         return
       }
 
-      // Profile is created server-side by the register endpoint
       setSuccess(true)
-      setError(null)
-      setTimeout(() => {
-        router.push('/login?message=' + encodeURIComponent('Registration successful! You can sign in now.'))
-      }, 1200)
+
+      const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) {
+        setError(signInError.message || 'Automatic sign-in failed. Please log in to continue.')
+        setSuccess(false)
+        return
+      }
+      if (!sessionData.session?.access_token) {
+        setError('Automatic sign-in succeeded but session cookie was missing. Please log in to continue.')
+        setSuccess(false)
+        return
+      }
+
+      await fetch('/api/auth/set-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session: sessionData.session })
+      })
+
+      router.push('/dashboard')
     } catch (err: any) {
-      console.error('Registration error:', err)
       setError(err.message || 'An unexpected error occurred')
+    } finally {
       setLoading(false)
     }
   }
@@ -63,9 +91,9 @@ export default function RegisterForm() {
     return (
       <div className="space-y-4">
         <div className="bg-green-100 border-2 border-green-600 text-green-700 px-4 py-3 font-bold text-sm">
-          ✓ Registration successful! Please check your email to verify your account.
+          Account created. Your 7-day free trial is active.
         </div>
-        <p className="text-sm text-muted">Redirecting to login...</p>
+        <p className="text-sm text-muted">Redirecting to dashboard...</p>
       </div>
     )
   }
@@ -77,69 +105,64 @@ export default function RegisterForm() {
           {error}
         </div>
       )}
-      <div>
-        <label htmlFor="fullName" className="block text-sm font-bold mb-1">
-          Full Name
-        </label>
-        <input
-          id="fullName"
-          type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className="brutal-input w-full"
-          required
-          minLength={2}
-        />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="fullName" className="block text-sm font-bold mb-1">
+            Full Name
+          </label>
+          <input id="fullName" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="brutal-input w-full" required minLength={2} />
+        </div>
+        <div>
+          <label htmlFor="phone" className="block text-sm font-bold mb-1">
+            Phone Number
+          </label>
+          <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="brutal-input w-full" placeholder="Optional" />
+        </div>
       </div>
+
       <div>
         <label htmlFor="regEmail" className="block text-sm font-bold mb-1">
-          Email
+          Email Address
         </label>
-        <input
-          id="regEmail"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="brutal-input w-full"
-          required
-        />
+        <input id="regEmail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="brutal-input w-full" required />
       </div>
-      <div>
-        <label htmlFor="regPassword" className="block text-sm font-bold mb-1">
-          Password
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="regPassword" className="block text-sm font-bold mb-1">
+            Password
+          </label>
+          <input id="regPassword" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="brutal-input w-full" required minLength={8} />
+        </div>
+        <div>
+          <label htmlFor="confirmPassword" className="block text-sm font-bold mb-1">
+            Confirm Password
+          </label>
+          <input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="brutal-input w-full" required minLength={8} />
+        </div>
+      </div>
+      <p className="text-xs text-muted -mt-3">Minimum 8 characters. Passwords are stored through Supabase Auth.</p>
+
+      <div className="space-y-3 text-sm">
+        <label className="flex items-start gap-3">
+          <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="mt-1" required />
+          <span>
+            I accept the <a href="/terms" className="text-primary underline">Terms & Conditions</a> and{' '}
+            <a href="/privacy" className="text-primary underline">Privacy Policy</a>. Subscription is mandatory and includes a
+            7-day free trial.
+          </span>
         </label>
-        <input
-          id="regPassword"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="brutal-input w-full"
-          required
-          minLength={8}
-        />
-        <p className="text-xs text-muted mt-1">Minimum 8 characters</p>
-      </div>
-      <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-bold mb-1">
-          Confirm Password
+        <label className="flex items-start gap-3">
+          <input type="checkbox" checked={privacyAccepted} onChange={(e) => setPrivacyAccepted(e.target.checked)} className="mt-1" required />
+          <span>I accept the privacy policy.</span>
         </label>
-        <input
-          id="confirmPassword"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="brutal-input w-full"
-          required
-          minLength={8}
-        />
       </div>
-      <button
-        type="submit"
-        className="brutal-btn brutal-btn-primary w-full"
-        disabled={loading}
-      >
-        {loading ? 'Creating account...' : 'Create account'}
+
+      <button type="submit" className="brutal-btn brutal-btn-primary w-full" disabled={loading}>
+        {loading ? 'Creating account...' : 'Start 7-day free trial'}
       </button>
     </form>
   )
 }
+

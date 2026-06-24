@@ -1,20 +1,24 @@
 export type Role = 'user' | 'admin'
 export type SubscriptionPlan = 'monthly' | 'yearly'
-export type SubscriptionStatus = 'active' | 'inactive' | 'cancelled' | 'past_due' | 'expired'
+export type SubscriptionStatus = 'trial_active' | 'active' | 'expired'
 export type DrawStatus = 'draft' | 'scheduled' | 'running' | 'completed'
 export type VerificationStatus = 'pending' | 'approved' | 'rejected'
 export type PaymentStatus = 'pending' | 'processing' | 'paid' | 'failed'
 
 export interface Profile {
   id: string
-  email?: string | null
-  full_name: string
+  phone?: string | null
+  full_name?: string | null
   avatar_url?: string | null
   role: Role
   charity_id?: string | null
-  contribution_percentage: number
-  created_at: string
-  updated_at: string
+  contribution_percentage?: number | null
+  subscription_status?: SubscriptionStatus
+  trial_end?: string | null
+  trial_end_date?: string | null
+  privacy_accepted?: boolean
+  terms_accepted?: boolean
+  created_at?: string
 }
 
 export interface Subscription {
@@ -22,21 +26,32 @@ export interface Subscription {
   user_id: string
   stripe_customer_id?: string | null
   stripe_subscription_id?: string | null
+  plan?: SubscriptionPlan
   plan_type: SubscriptionPlan
   status: SubscriptionStatus
+  is_trial?: boolean
+  trial_end?: string | null
+  trial_end_date?: string | null
+  trial_reminder_sent_at?: string | null
+  renewal_date?: string | null
+  started_at?: string | null
+  expires_at?: string | null
   current_period_start?: string | null
   current_period_end?: string | null
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface Charity {
   id: string
   name: string
   description?: string | null
+  is_active?: boolean
   website?: string | null
+  image_url?: string | null
   logo_url?: string | null
-  active: boolean
+  events?: Record<string, any> | null
+  active?: boolean
   created_at: string
 }
 
@@ -98,8 +113,10 @@ export interface Payout {
   amount: number
   payment_method?: string | null
   transaction_reference?: string | null
+  stripe_transfer_id?: string | null
   status: PaymentStatus
   paid_at?: string | null
+  processed_at?: string | null
   created_at: string
 }
 

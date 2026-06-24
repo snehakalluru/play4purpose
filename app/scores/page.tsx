@@ -9,17 +9,18 @@ export default function ScoresPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({ score: '', played_date: '' })
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editFormData, setEditFormData] = useState({ score: '', played_date: '' })
 
   useEffect(() => {
     loadScores()
   }, [])
 
   async function loadScores() {
-    const { data } = await supabase.auth.getUser()
-    const user = (data as any)?.user
-    if (!user) return router.push('/login')
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return router.push('/login')
 
-    const token = (data as any).session?.access_token
+    const token = session.access_token
     const res = await fetch('/api/scores', {
       headers: { Authorization: `Bearer ${token}` }
     })
@@ -28,22 +29,79 @@ export default function ScoresPage() {
     setLoading(false)
   }
 
+  async function startEdit(score: any) {
+    setEditingId(score.id)
+    setEditFormData({ score: score.score_value.toString(), played_date: score.score_date })
+  }
+
+  async function cancelEdit() {
+    setEditingId(null)
+    setEditFormData({ score: '', played_date: '' })
+  }
+
+  async function saveEdit(id: string) {
+    setSubmitting(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return router.push('/login')
+
+    const token = session.access_token
+    const res = await fetch(`/api/scores/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        score_value: parseInt(editFormData.score),
+        score_date: editFormData.played_date
+      })
+    })
+
+    const json = await res.json()
+    if (res.ok) {
+      setEditingId(null)
+      setEditFormData({ score: '', played_date: '' })
+      loadScores()
+    } else {
+      alert(json.error || 'Failed to update score')
+    }
+    setSubmitting(false)
+  }
+
+  async function deleteScore(id: string) {
+    if (!confirm('Are you sure you want to delete this score?')) return
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return router.push('/login')
+
+    const token = session.access_token
+    const res = await fetch(`/api/scores/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+
+    const json = await res.json()
+    if (res.ok) {
+      loadScores()
+    } else {
+      alert(json.error || 'Failed to delete score')
+    }
+  }
+
   async function submitScore(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
 
-    const { data } = await supabase.auth.getUser()
-    const user = (data as any)?.user
-    if (!user) return router.push('/login')
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return router.push('/login')
 
-    const token = (data as any).session?.access_token
+    const token = session.access_token
+    const userId = session.user.id
+
     const res = await fetch('/api/scores/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        score: parseInt(formData.score),
-        played_date: formData.played_date,
-        user_id: user.id
+        score_value: parseInt(formData.score),
+        score_date: formData.played_date,
+        user_id: userId
       })
     })
 
@@ -60,7 +118,7 @@ export default function ScoresPage() {
   // Calculate rolling average from last 5 scores
   const lastFive = scores.slice(0, 5)
   const average = lastFive.length > 0
-    ? (lastFive.reduce((sum, s) => sum + s.score, 0) / lastFive.length).toFixed(1)
+    ? (lastFive.reduce((sum, s) => sum + s.score_value, 0) / lastFive.length).toFixed(1)
     : '—'
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
@@ -136,15 +194,69 @@ export default function ScoresPage() {
                 <p className="text-muted text-center py-8">No scores recorded yet. Add your first score!</p>
               ) : (
                 <div className="space-y-2">
-                  {scores.map((s) => (
+                {scores.map((s) => (
                     <div key={s.id} className="flex justify-between items-center p-3 bg-surface rounded">
-                      <div>
-                        <span className="font-bold text-lg">{s.score}</span>
-                        <span className="text-muted text-sm ml-2">strokes</span>
-                      </div>
-                      <div className="text-sm text-muted">
-                        {new Date(s.played_date).toLocaleDateString()}
-                      </div>
+                      {editingId === s.id ? (
+                        <div className="flex-1 grid grid-cols-2 gap-2">
+                          <input
+                            id={`edit-score-${s.id}`}
+                            type="number"
+                            min="40"
+                            max="200"
+                            value={editFormData.score}
+                            onChange={(e) => setEditFormData({ ...editFormData, score: e.target.value })}
+                            className="brutal-input text-sm"
+                            title="Score (40-200)"
+                          />
+                          <input
+                            id={`edit-date-${s.id}`}
+                            type="date"
+                            value={editFormData.played_date}
+                            onChange={(e) => setEditFormData({ ...editFormData, played_date: e.target.value })}
+                            className="brutal-input text-sm"
+                            title="Date played"
+                          />
+                          <div className="col-span-2 flex gap-2">
+                            <button
+                              onClick={() => saveEdit(s.id)}
+                              disabled={submitting}
+                              className="brutal-btn bg-green-600 text-white text-xs flex-1"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={cancelEdit}
+                              className="brutal-btn brutal-btn-outline text-xs flex-1"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div>
+                            <span className="font-bold text-lg">{s.score_value}</span>
+                            <span className="text-muted text-sm ml-2">strokes</span>
+                          </div>
+                          <div className="text-sm text-muted">
+                            {new Date(s.score_date).toLocaleDateString()}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => startEdit(s)}
+                              className="brutal-btn bg-blue-600 text-white text-xs"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => deleteScore(s.id)}
+                              className="brutal-btn bg-red-600 text-white text-xs"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>

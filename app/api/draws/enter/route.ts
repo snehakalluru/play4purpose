@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../services/supabaseAdmin'
+import { getSubscriptionAccess } from '../../../../lib/subscriptionAccess'
 
 export async function POST(req: Request) {
   try {
@@ -11,25 +12,8 @@ export async function POST(req: Request) {
     if (userErr || !userResp?.user) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     const userId = userResp.user.id
 
-    // Check eligibility: active subscription, charity selected, 5+ scores
-    const { data: sub } = await supabaseAdmin
-      .from('subscriptions')
-      .select('status')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .limit(1)
-      .maybeSingle()
-
-    if (!sub) return NextResponse.json({ error: 'Active subscription required' }, { status: 403 })
-
-    const { data: charity } = await supabaseAdmin
-      .from('user_charities')
-      .select('user_id')
-      .eq('user_id', userId)
-      .limit(1)
-      .maybeSingle()
-
-    if (!charity) return NextResponse.json({ error: 'Please select a charity first' }, { status: 403 })
+    const access = await getSubscriptionAccess(userId)
+    if (!access.allowed) return NextResponse.json({ error: access.reason || 'Active subscription required' }, { status: 403 })
 
     const { count: scoreCount } = await supabaseAdmin
       .from('scores')
@@ -70,9 +54,10 @@ export async function POST(req: Request) {
       .from('draw_entries')
       .insert({ draw_id: draw.id, user_id: userId, entry_number: entryNumber })
       .select('*')
-      .single()
+      .maybeSingle()
 
     if (insertErr) return NextResponse.json({ error: insertErr.message }, { status: 500 })
+    if (!entry) return NextResponse.json({ error: 'Failed to enter draw' }, { status: 500 })
 
     return NextResponse.json({ ok: true, entry })
   } catch (err: any) {

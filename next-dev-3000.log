@@ -1,0 +1,158 @@
+
+> play4purpose@0.1.0 dev
+> next dev --port 3000
+
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3000
+   - Network:      http://10.87.116.9:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 2.9s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 746ms (163 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 3.4s (637 modules)
+ GET / 200 in 5259ms
+ ✓ Compiled in 288ms (234 modules)
+ GET / 200 in 1959ms
+ ○ Compiling /register ...
+ ✓ Compiled /register in 2.4s (736 modules)
+ GET /register 200 in 2784ms
+ GET /register 200 in 52ms
+ GET /register 200 in 47ms
+ GET / 200 in 1391ms
+ ○ Compiling /api/charities ...
+ ✓ Compiled /api/charities in 624ms (757 modules)
+ GET /register 200 in 140ms
+ GET /api/charities 500 in 1076ms
+ GET /api/charities 500 in 227ms
+ GET /register 200 in 45ms
+ GET /api/charities 500 in 220ms
+ GET /api/charities 500 in 227ms
+ GET / 200 in 1380ms
+ GET / 200 in 827ms
+ GET / 200 in 1065ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1038ms (745 modules)
+ GET /login 200 in 1598ms
+ ✓ Compiled in 547ms (286 modules)
+ GET /login 200 in 89ms
+ GET /login 200 in 73ms
+ ○ Compiling /api/auth/set-session ...
+ ✓ Compiled /api/auth/set-session in 555ms (750 modules)
+ POST /api/auth/set-session 200 in 795ms
+ ○ Compiling /api/auth/role ...
+ ✓ Compiled /api/auth/role in 676ms (759 modules)
+ GET /api/auth/role 200 in 1906ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 1181ms (797 modules)
+ GET /admin 200 in 2612ms
+ GET /admin 200 in 508ms
+ ○ Compiling /api/admin/winners ...
+ ✓ Compiled /api/admin/winners in 1372ms (794 modules)
+ GET /api/admin/scores 200 in 2295ms
+ GET /api/admin/draws 200 in 2276ms
+ GET /api/admin/winners 200 in 2272ms
+ GET /api/admin/users 500 in 2763ms
+ GET /api/admin/subscriptions 200 in 2881ms
+ GET /admin 200 in 475ms
+ GET /api/admin/winners 200 in 927ms
+ GET /api/admin/scores 200 in 902ms
+ GET /api/admin/draws 200 in 975ms
+ GET /api/admin/subscriptions 200 in 790ms
+ GET /api/admin/users 500 in 946ms
+ GET /api/admin/users 500 in 1233ms
+ GET /api/admin/users 500 in 988ms
+ GET /api/admin/draws 200 in 1055ms
+ GET /api/admin/draws 200 in 993ms
+ GET /api/admin/users 500 in 1099ms
+ GET /api/admin/users 500 in 987ms
+ ○ Compiling /api/admin/winners/list ...
+ ✓ Compiled /api/admin/winners/list in 979ms (810 modules)
+ GET /api/admin/winners/list 500 in 2158ms
+ GET /admin 200 in 462ms
+ GET /api/admin/winners/list 500 in 878ms
+ ○ Compiling /api/admin/payouts ...
+ ✓ Compiled /api/admin/payouts in 962ms (812 modules)
+ GET /api/admin/payouts 200 in 2237ms
+ GET /admin 200 in 512ms
+ GET /api/admin/payouts 200 in 1181ms
+ ○ Compiling /api/admin/charities ...
+ ✓ Compiled /api/admin/charities in 857ms (812 modules)
+ GET /api/admin/charities 200 in 2165ms
+ GET /admin 200 in 577ms
+ GET /api/admin/charities 200 in 882ms
+ GET /api/admin/users 500 in 1022ms
+ GET /api/admin/users 500 in 1326ms
+   Reload env: .env
+ ✓ Compiled in 929ms (925 modules)
+ GET /admin 200 in 1127ms
+   Reload env: .env
+ ✓ Compiled in 2.5s (939 modules)
+ GET /admin 200 in 1230ms
+ ✓ Compiled in 908ms (925 modules)
+   Reload env: .env
+ ✓ Compiled in 1883ms (925 modules)
+ GET / 200 in 4644ms
+ GET /register 200 in 396ms
+ ○ Compiling /api/charities ...
+ ✓ Compiled /api/charities in 3.2s (503 modules)
+ GET /api/charities 500 in 5920ms
+ GET /login 200 in 759ms
+ GET /api/charities 500 in 443ms
+ GET /login 200 in 431ms
+ GET /login 200 in 263ms
+ ○ Compiling /api/auth/set-session ...
+ ✓ Compiled /api/auth/set-session in 1785ms (505 modules)
+ POST /api/auth/set-session 200 in 2111ms
+ ○ Compiling /api/auth/role ...
+ ✓ Compiled /api/auth/role in 1073ms (507 modules)
+ GET /api/auth/role 200 in 3094ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 6.2s (807 modules)
+ POST /api/auth/set-session 200 in 3267ms
+ GET /api/auth/role 200 in 1695ms
+ GET /dashboard 200 in 8928ms
+ GET /dashboard 200 in 1210ms
+ GET /dashboard 200 in 1275ms
+ ○ Compiling /api/profile ...
+ ✓ Compiled /api/profile in 1668ms (795 modules)
+ GET /api/profile 500 in 2867ms
+ ○ Compiling /api/scores ...
+ GET /api/profile 500 in 2000ms
+ ✓ Compiled /api/scores in 2.2s (812 modules)
+ GET /api/scores?limit=5 403 in 3491ms
+ GET /dashboard 200 in 882ms
+ ○ Compiling /api/draws ...
+ ✓ Compiled /api/draws in 3.3s (814 modules)
+ GET /api/scores?limit=5 403 in 4500ms
+ GET /api/draws 500 in 4711ms
+ GET /dashboard 200 in 1093ms
+ ○ Compiling /api/winnings ...
+ GET /api/draws 500 in 813ms
+ ✓ Compiled /api/winnings in 1220ms (816 modules)
+ GET /api/winnings 200 in 2033ms
+ GET /dashboard 200 in 577ms
+ GET /api/winnings 200 in 537ms
+ ✓ Compiled in 1285ms (947 modules)
+ ✓ Compiled in 601ms (294 modules)
+ GET /dashboard 200 in 2367ms
+ GET /dashboard 200 in 3196ms
+ ○ Compiling /api/profile ...
+ ✓ Compiled /api/profile in 4.2s (509 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 10.2s (1149 modules)
+ GET / 500 in 22981ms
+ GET / 500 in 517ms
+ GET /api/profile 500 in 32402ms
+ GET /api/profile 500 in 633ms
+ GET / 500 in 4379ms
+ GET / 500 in 484ms
+ GET / 500 in 9917ms
+ GET / 500 in 3227ms
+ GET / 500 in 515ms
+ GET / 500 in 3738ms
+ GET / 500 in 889ms
+ GET / 500 in 7280ms
+ GET / 500 in 7962ms

@@ -1,23 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const roleState = vi.hoisted(() => ({
+  result: { isAuthenticated: false, role: 'user' as 'user' | 'admin', userId: null as string | null }
+}))
+
+vi.mock('../lib/getUserRole', () => ({
+  getUserRoleFromRequest: vi.fn(async () => roleState.result)
+}))
+
 import { middleware } from '../middleware'
 
-function makeReq(path: string, token?: string) {
+function makeReq(path: string) {
   return {
     nextUrl: { pathname: path },
     url: `https://example.com${path}`,
     cookies: {
-      get: (name: string) => {
-        if (!token) return undefined
-        if (name === 'sb-access-token' || name === 'supabase-auth-token') return { value: token }
-        return undefined
-      }
+      get: () => undefined,
+      getAll: () => []
     }
   } as any
 }
 
 beforeEach(() => {
-  // reset fetch mock
-  ;(global as any).fetch = vi.fn()
+  roleState.result = { isAuthenticated: false, role: 'user', userId: null }
 })
 
 describe('middleware', () => {
@@ -26,35 +31,35 @@ describe('middleware', () => {
     expect(res.status).toBe(200)
   })
 
-  it('redirects unauthenticated to login for protected path', async () => {
+  it('redirects unauthenticated users to login for protected paths', async () => {
     const res: any = await middleware(makeReq('/dashboard'))
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/login')
   })
 
-  it('allows active subscription', async () => {
-    ;(global as any).fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [{ status: 'active' }] })
-    const res: any = await middleware(makeReq('/dashboard', 'token-abc'))
+  it('allows authenticated users into the dashboard', async () => {
+    roleState.result = { isAuthenticated: true, role: 'user', userId: 'user-1' }
+    const res: any = await middleware(makeReq('/dashboard'))
     expect(res.status).toBe(200)
   })
 
-  it('redirects to pricing when subscription inactive', async () => {
-    ;(global as any).fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [{ status: 'canceled' }] })
-    const res: any = await middleware(makeReq('/dashboard', 'token-abc'))
+  it('redirects admins from dashboard to admin', async () => {
+    roleState.result = { isAuthenticated: true, role: 'admin', userId: 'admin-1' }
+    const res: any = await middleware(makeReq('/dashboard'))
     expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toContain('/pricing')
+    expect(res.headers.get('location')).toContain('/admin')
   })
 
-  it('admin route allows admin role', async () => {
-    ;(global as any).fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [{ role: 'admin' }] })
-    const res: any = await middleware(makeReq('/admin', 'token-abc'))
+  it('allows admin routes for admins', async () => {
+    roleState.result = { isAuthenticated: true, role: 'admin', userId: 'admin-1' }
+    const res: any = await middleware(makeReq('/admin'))
     expect(res.status).toBe(200)
   })
 
-  it('admin route denies non-admin role', async () => {
-    ;(global as any).fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [{ role: 'user' }] })
-    const res: any = await middleware(makeReq('/admin', 'token-abc'))
+  it('denies admin routes for non-admins', async () => {
+    roleState.result = { isAuthenticated: true, role: 'user', userId: 'user-1' }
+    const res: any = await middleware(makeReq('/admin'))
     expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toContain('/')
+    expect(res.headers.get('location')).toContain('/dashboard')
   })
 })

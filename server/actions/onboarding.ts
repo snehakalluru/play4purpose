@@ -2,7 +2,7 @@ import { supabaseAdmin } from '../../services/supabaseAdmin'
 import { stripe } from '../../services/stripeClient'
 import type { RegisterInput, CharitySelectionInput, ScoreEntryInput } from '../../lib/validators/onboarding'
 import { registerSchema, charitySelectionSchema, initialScoresSchema } from '../../lib/validators/onboarding'
-import type { Profile, Subscription, UserCharity, Score } from '../../types/db'
+import type { Profile, Subscription } from '../../types/db'
 
 // Register a user via Supabase Auth (admin). Returns created user id.
 export async function registerUser(input: RegisterInput) {
@@ -23,13 +23,8 @@ export async function registerUser(input: RegisterInput) {
   // Insert initial profile row
   const profilePayload: Partial<Profile> = {
     id: user.id,
-    email: parsed.email,
     full_name: parsed.full_name,
-    avatar_url: parsed.avatar_url || null,
-    role: 'user',
-    email_verified: false,
-    terms_accepted: false,
-    onboarding_completed: false
+    role: 'user'
   }
 
   const up = await supabaseAdmin.from('profiles').upsert(profilePayload)
@@ -39,14 +34,11 @@ export async function registerUser(input: RegisterInput) {
 }
 
 export async function verifyEmail(userId: string) {
-  // Called after Supabase confirms email verification (via webhook or callback)
-  const { error } = await supabaseAdmin.from('profiles').update({ email_verified: true }).eq('id', userId)
-  if (error) throw error
   return true
 }
 
 export async function acceptTerms(userId: string) {
-  const { error } = await supabaseAdmin.from('profiles').update({ terms_accepted: true, terms_accepted_at: new Date().toISOString() }).eq('id', userId)
+  const { error } = await supabaseAdmin.from('profiles').update({ terms_accepted: true }).eq('id', userId)
   if (error) throw error
   return true
 }
@@ -54,21 +46,29 @@ export async function acceptTerms(userId: string) {
 export async function saveCharitySelection(userId: string, input: CharitySelectionInput) {
   const parsed = charitySelectionSchema.parse(input)
 
-  // Upsert user_charities (one per user)
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .update({
+      charity_id: parsed.charity_id,
+      contribution_percentage: parsed.contribution_percentage
+    })
+    .eq('id', userId)
+
+  if (profileError) throw profileError
+
   const { error } = await supabaseAdmin.from('user_charities').upsert({
     user_id: userId,
     charity_id: parsed.charity_id,
     contribution_percentage: parsed.contribution_percentage
   }, { onConflict: 'user_id' })
 
-  if (error) throw error
+  if (error) {
+    console.warn('Charity mirror save failed in onboarding action:', error.message)
+  }
   return true
 }
 
 export async function saveHandicap(userId: string, handicap?: number | null) {
-  const payload: Partial<Profile> = { handicap: handicap ?? null }
-  const { error } = await supabaseAdmin.from('profiles').update(payload).eq('id', userId)
-  if (error) throw error
   return true
 }
 
@@ -76,7 +76,7 @@ export async function saveInitialScores(userId: string, scores: ScoreEntryInput[
   const parsed = initialScoresSchema.parse(scores)
 
   // Insert scores; rely on DB unique constraint and retention trigger
-  const rows = parsed.map((s) => ({ user_id: userId, score: s.score, score_date: s.score_date }))
+  const rows = parsed.map((s) => ({ user_id: userId, score_value: s.score, score_date: s.score_date }))
   const { error } = await supabaseAdmin.from('scores').insert(rows)
   if (error) throw error
   return true
@@ -103,7 +103,9 @@ export async function activateSubscription(userId: string, stripeCustomerId: str
     plan,
     status,
     started_at: startedAt ?? new Date().toISOString(),
-    expires_at: expiresAt ?? null
+    renewal_date: expiresAt ? new Date(expiresAt).toISOString().slice(0, 10) : null,
+    trial_end: expiresAt ? new Date(expiresAt).toISOString().slice(0, 10) : null,
+    trial_end_date: expiresAt ? new Date(expiresAt).toISOString().slice(0, 10) : null
   }
 
   const { error } = await supabaseAdmin.from('subscriptions').upsert(payload, { onConflict: 'stripe_subscription_id' })
@@ -112,7 +114,5 @@ export async function activateSubscription(userId: string, stripeCustomerId: str
 }
 
 export async function completeOnboarding(userId: string) {
-  const { error } = await supabaseAdmin.from('profiles').update({ onboarding_completed: true }).eq('id', userId)
-  if (error) throw error
   return true
 }

@@ -15,10 +15,17 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 
   describe('DB trigger: keep_latest_five_scores', () => {
     it('keeps only latest 5 scores per user', async () => {
-      const userId = uuidv4()
+      const email = `${uuidv4()}@test.local`
+      const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: 'TestPassword123!',
+        email_confirm: true
+      })
+      if (authErr) throw authErr
+      const userId = authData.user.id
 
       // create profile
-      const { error: pErr } = await supabaseAdmin.from('profiles').insert({ id: userId, email: `${userId}@test.local`, full_name: 'Test User' })
+      const { error: pErr } = await supabaseAdmin.from('profiles').insert({ id: userId, full_name: 'Test User' })
       if (pErr) throw pErr
 
       // insert 7 scores with decreasing dates (newest first)
@@ -27,12 +34,12 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
         const d = new Date(now)
         d.setDate(now.getDate() - i)
         const score_date = d.toISOString().slice(0, 10)
-        const { error } = await supabaseAdmin.from('scores').insert({ user_id: userId, score: 10 + i, score_date })
+        const { error } = await supabaseAdmin.from('scores').insert({ user_id: userId, score_value: 10 + i, score_date })
         if (error) throw error
       }
 
       // fetch scores ordered descending
-      const { data: rows, error: fetchErr } = await supabaseAdmin.from('scores').select('score, score_date, created_at').eq('user_id', userId).order('score_date', { ascending: false })
+      const { data: rows, error: fetchErr } = await supabaseAdmin.from('scores').select('score_value, score_date, created_at').eq('user_id', userId).order('score_date', { ascending: false })
       if (fetchErr) throw fetchErr
 
       expect(rows.length).toBeLessThanOrEqual(5)
@@ -47,6 +54,7 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
       // cleanup
       await supabaseAdmin.from('scores').delete().eq('user_id', userId)
       await supabaseAdmin.from('profiles').delete().eq('id', userId)
+      await supabaseAdmin.auth.admin.deleteUser(userId)
     }, 20000)
   })
 }

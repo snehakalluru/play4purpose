@@ -1,0 +1,280 @@
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (102kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (250kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json',
+  page: '/api/profile'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\server\app\page.js'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\server\\app\\page.js',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\server\app\page.js'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\server\\app\\page.js',
+  page: '/'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json',
+  page: '/api/profile'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'C:\play4purpose\.next\cache\webpack\client-development-fallback\0.pack.gz_' -> 'C:\play4purpose\.next\cache\webpack\client-development-fallback\0.pack.gz'
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1629058425'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1629058425'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1629058425'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  digest: '2029366843'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+[TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\prerender-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\prerender-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\prerender-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\prerender-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\prerender-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\prerender-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\prerender-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\prerender-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\play4purpose\.next\prerender-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\play4purpose\\.next\\prerender-manifest.json'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1629058425'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1629058425'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1629058425'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  digest: '2029366843'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+[TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1629058425'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1629058425'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1629058425'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  digest: '2029366843'
+}
+ ⨯ Error: Could not find the module "C:\play4purpose\node_modules\.pnpm\next@15.5.19_react-dom@18.2.0_react@18.2.0__react@18.2.0\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '3421008477'
+}
+[TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/'
+}

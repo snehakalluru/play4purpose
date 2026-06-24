@@ -26,18 +26,18 @@ export default function ActiveDraw() {
       if (!mounted) return
       setUserId(uid)
 
-      const { data: draws, error: drawErr } = await supabase
-        .from('draws')
-        .select('*')
-        .in('status', ['open', 'published'])
-        .order('created_at', { ascending: false })
-        .limit(1)
+      const drawsRes = await fetch('/api/draws?limit=1', {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      })
+      const drawsJson = await drawsRes.json()
 
-      if (drawErr) {
-        setError(drawErr.message)
+      if (!drawsRes.ok || !drawsJson.ok) {
+        setError(drawsJson.error || 'Unable to load draw')
         setLoading(false)
         return
       }
+
+      const draws = drawsJson.data || []
       if (!draws || draws.length === 0) {
         setError('No active draw at the moment')
         setLoading(false)
@@ -91,7 +91,7 @@ export default function ActiveDraw() {
             }
             return (
               <li key={e.id} className="p-2 bg-background/20 rounded">
-                <div className="text-sm">Numbers: {nums.join(', ')}</div>
+                <div className="text-sm">Entry: {e.entry_number || nums.join(', ')}</div>
                 <div className="text-xs text-muted">Entered: {new Date(e.created_at).toLocaleString()}</div>
               </li>
             )
