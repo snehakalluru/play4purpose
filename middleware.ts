@@ -4,7 +4,7 @@ import { getUserRoleFromRequest } from './lib/getUserRole'
 
 const PUBLIC_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/favicon.ico']
 const PUBLIC_PREFIXES = ['/_next/', '/api/stripe/webhook', '/api/auth/', '/api/charities']
-const SUBSCRIPTION_REQUIRED_PREFIXES = ['/scores', '/draws']
+const SUBSCRIPTION_REQUIRED_PREFIXES = ['/draws']
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.includes(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
