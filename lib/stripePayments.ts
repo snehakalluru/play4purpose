@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { supabaseAdmin } from '../services/supabaseAdmin'
 import { assertStripeConfigured, assertStripeWebhookConfigured, stripe } from '../services/stripeClient'
+import { getSubscriptionStatus } from './subscriptionStatus'
 
-const ACTIVE_STATUS = 'active'
 const VALID_PLANS = ['monthly', 'yearly'] as const
 
 type PaymentPlan = (typeof VALID_PLANS)[number]
@@ -79,13 +79,16 @@ async function findOrCreateCustomer(userId: string, email?: string | null) {
       .eq('id', subscription.id)
     if (updateError) throw updateError
   } else {
+    const status = getSubscriptionStatus('trialing')
+    console.log('SUBSCRIPTION INSERT STATUS:', status)
+
     const { error: insertError } = await supabaseAdmin
       .from('subscriptions')
       .insert({
         user_id: userId,
         stripe_customer_id: customer.id,
         plan_type: 'monthly',
-        status: 'trial_active',
+        status,
         is_trial: true
       })
     if (insertError) throw insertError
@@ -162,6 +165,8 @@ async function markCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   const now = new Date().toISOString()
   const amount = getSessionAmount(session)
   const planType = isPaymentPlan(session.metadata?.plan_type) ? session.metadata.plan_type : 'monthly'
+  const status = getSubscriptionStatus(session.status === 'complete' ? 'active' : session.status || 'incomplete')
+  console.log('SUBSCRIPTION INSERT STATUS:', status)
 
   const payload = {
     user_id: userId,
@@ -171,7 +176,7 @@ async function markCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     amount_paid: amount,
     currency: session.currency,
     plan_type: planType,
-    status: ACTIVE_STATUS,
+    status,
     is_trial: false,
     started_at: now,
     current_period_start: now,
@@ -187,7 +192,7 @@ async function markCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
 
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
-    .update({ subscription_status: ACTIVE_STATUS, updated_at: now })
+    .update({ subscription_status: 'active', updated_at: now })
     .eq('id', userId)
 
   if (profileError) throw profileError

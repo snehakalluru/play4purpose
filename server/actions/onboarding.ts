@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../../services/supabaseAdmin'
 import { stripe } from '../../services/stripeClient'
+import { getSubscriptionStatus } from '../../lib/subscriptionStatus'
 import type { RegisterInput, CharitySelectionInput, ScoreEntryInput } from '../../lib/validators/onboarding'
 import { registerSchema, charitySelectionSchema, initialScoresSchema } from '../../lib/validators/onboarding'
 import type { Profile, Subscription } from '../../types/db'
@@ -96,12 +97,15 @@ export async function createCheckoutSession(userId: string, priceId: string, suc
 }
 
 export async function activateSubscription(userId: string, stripeCustomerId: string, stripeSubscriptionId: string, plan: Subscription['plan'], status: Subscription['status'] | any = 'active', startedAt?: string, expiresAt?: string) {
+  const subscriptionStatus = getSubscriptionStatus(status)
+  console.log('SUBSCRIPTION INSERT STATUS:', subscriptionStatus)
+
   const payload: Partial<Subscription> = {
     user_id: userId,
     stripe_customer_id: stripeCustomerId,
     stripe_subscription_id: stripeSubscriptionId,
     plan,
-    status,
+    status: subscriptionStatus as any,
     started_at: startedAt ?? new Date().toISOString(),
     renewal_date: expiresAt ? new Date(expiresAt).toISOString().slice(0, 10) : null,
     trial_end: expiresAt ? new Date(expiresAt).toISOString().slice(0, 10) : null,

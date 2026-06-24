@@ -1,6 +1,7 @@
 export type Role = 'user' | 'admin'
 export type SubscriptionPlan = 'monthly' | 'yearly'
-export type SubscriptionStatus = 'trial_active' | 'active' | 'expired'
+export type SubscriptionStatus = 'active' | 'trialing' | 'cancelled' | 'past_due' | 'incomplete'
+export type ProfileSubscriptionStatus = 'trial_active' | 'active' | 'expired'
 export type DrawStatus = 'draft' | 'scheduled' | 'running' | 'completed'
 export type VerificationStatus = 'pending' | 'approved' | 'rejected'
 export type PaymentStatus = 'pending' | 'processing' | 'paid' | 'failed'
@@ -13,7 +14,7 @@ export interface Profile {
   role: Role
   charity_id?: string | null
   contribution_percentage?: number | null
-  subscription_status?: SubscriptionStatus
+  subscription_status?: ProfileSubscriptionStatus
   trial_end?: string | null
   trial_end_date?: string | null
   privacy_accepted?: boolean

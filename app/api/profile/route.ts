@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../services/supabaseAdmin'
+import { getSubscriptionStatus } from '../../../lib/subscriptionStatus'
 
 export async function GET(req: Request) {
   try {
@@ -76,12 +77,15 @@ export async function GET(req: Request) {
 
       if (!ensuredSubscription) {
         const trialEndDateSql = (ensuredProfile?.trial_end || ensuredProfile?.trial_end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
+        const subscriptionStatus = getSubscriptionStatus('trialing')
+        console.log('SUBSCRIPTION INSERT STATUS:', subscriptionStatus)
+
         const { data: createdSubscription, error: subscriptionCreateError } = await supabaseAdmin
           .from('subscriptions')
           .insert({
             user_id: userId,
             plan_type: 'monthly',
-            status: 'trial_active',
+            status: subscriptionStatus,
             is_trial: true,
             trial_end: trialEndDateSql,
             trial_end_date: trialEndDateSql,

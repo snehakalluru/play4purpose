@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../services/supabaseAdmin'
 import { rateLimit } from '../../../../lib/rateLimiter'
+import { getSubscriptionStatus } from '../../../../lib/subscriptionStatus'
 import { registrationSchema } from '../../../../validators/auth'
 
 type RegistrationFailure =
@@ -104,10 +105,13 @@ export async function POST(req: Request) {
 
     // Try to insert subscription, but don't fail if schema has issues
     try {
+      const subscriptionStatus = getSubscriptionStatus('trialing')
+      console.log('SUBSCRIPTION INSERT STATUS:', subscriptionStatus)
+
       const { error: subscriptionError } = await supabaseAdmin.from('subscriptions').insert({
         user_id: userId,
         plan_type: 'monthly',
-        status: 'trial_active',
+        status: subscriptionStatus,
         trial_end: trialEndDateStr,
         trial_end_date: trialEndDateStr
       })

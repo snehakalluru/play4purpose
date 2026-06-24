@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { supabaseAdmin } from '../services/supabaseAdmin'
+import { getSubscriptionStatus } from '../lib/subscriptionStatus'
 
 async function main() {
   const target = new Date()
@@ -9,7 +10,7 @@ async function main() {
   const { data: trials, error } = await supabaseAdmin
     .from('subscriptions')
     .select('id,user_id,trial_end_date,profiles:user_id(full_name)')
-    .eq('status', 'trial_active')
+    .eq('status', getSubscriptionStatus('trialing'))
     .eq('trial_end_date', targetDate)
     .is('trial_reminder_sent_at', null)
 
