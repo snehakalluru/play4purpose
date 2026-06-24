@@ -135,12 +135,12 @@ export default function ScoresPage() {
               <h2 className="text-xl font-bold mb-4">Add New Score</h2>
               <form onSubmit={submitScore} className="space-y-4">
                 <div>
-                  <label htmlFor="score" className="block text-sm font-bold mb-2">Score (40-200)</label>
+                  <label htmlFor="score" className="block text-sm font-bold mb-2">Score (1-45)</label>
                   <input
                     id="score"
                     type="number"
-                    min="40"
-                    max="200"
+                    min="1"
+                    max="45"
                     value={formData.score}
                     onChange={(e) => setFormData({ ...formData, score: e.target.value })}
                     className="brutal-input"
@@ -201,12 +201,12 @@ export default function ScoresPage() {
                           <input
                             id={`edit-score-${s.id}`}
                             type="number"
-                            min="40"
-                            max="200"
+                            min="1"
+                            max="45"
                             value={editFormData.score}
                             onChange={(e) => setEditFormData({ ...editFormData, score: e.target.value })}
                             className="brutal-input text-sm"
-                            title="Score (40-200)"
+                            title="Score (1-45))"
                           />
                           <input
                             id={`edit-date-${s.id}`}

@@ -42,7 +42,7 @@
 
 ### 3. Score Management System ✅
 - **Enhanced score form** with visual feedback
-- **Score validation** (40-200 range)
+- **Score validation** (1-45 range)
 - **Rolling average** calculation (last 5 scores)
 - **Score history** display
 - **Emoji feedback** based on score quality
@@ -182,7 +182,7 @@ npm run dev
 ### Admin
 - **Email**: digitalheros1@gmail.com
 - **Password**: digitalheros@prd
-- **Panel**: http://localhost:3002/admin
+- **Panel**: http://localhost:3000/admin
 
 ### Test Users (if seeded)
 - player1@test.com / Test123456
