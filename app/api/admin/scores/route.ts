@@ -20,12 +20,18 @@ export async function GET(req: Request) {
 
     if (error) {
       console.error('[admin/scores] Failed to load scores:', error.message)
-      return NextResponse.json({ ok: false, success: false, error: 'Failed to load scores' }, { status: 500 })
+      return NextResponse.json({ ok: false, success: false, data: [], scores: [], error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ ok: true, success: true, scores: data || [], data: data || [] })
+    return NextResponse.json({ ok: true, success: true, data: data || [], scores: data || [], error: null })
   } catch (err: any) {
     console.error('[admin/scores] Unexpected error:', err)
-    return NextResponse.json({ ok: false, success: false, error: err?.message || 'Unable to load scores' }, { status: 500 })
+    return NextResponse.json({
+      ok: false,
+      success: false,
+      data: [],
+      scores: [],
+      error: err?.message || 'Unable to load scores'
+    }, { status: 500 })
   }
 }

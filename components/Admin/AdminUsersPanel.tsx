@@ -19,14 +19,19 @@ export default function AdminUsersPanel() {
         return
       }
 
-      const res = await fetch('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch('/api/admin/users', {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store'
+      })
       const json = await res.json()
-      if (!res.ok) {
+      console.log('[admin/users] response', { status: res.status, ok: res.ok, json })
+      if (!res.ok || json?.error) {
         const msg = json?.error || 'Failed to load users'
         throw new Error(msg)
       }
-      setUsers(json.users || [])
+      setUsers(json.users || json.data || [])
     } catch (err: any) {
+      console.error('[admin/users] fetch failed:', err)
       setError(err?.message || 'Failed to load users')
     } finally {
       setLoading(false)

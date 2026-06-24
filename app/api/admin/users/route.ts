@@ -31,7 +31,12 @@ export async function GET(req: Request) {
   if (adminCheck instanceof NextResponse) return adminCheck
 
   try {
-    const authUsers = await listAllAuthUsers()
+    let authUsers: AuthUserSummary[] = []
+    try {
+      authUsers = await listAllAuthUsers()
+    } catch (authError: any) {
+      console.error('[admin/users] auth user email enrichment failed:', authError?.message || authError)
+    }
 
     let { data: users, error } = await supabaseAdmin
       .from('profiles')
@@ -42,26 +47,37 @@ export async function GET(req: Request) {
       console.error('[admin/users] profiles select failed, trying legacy users table:', error.message)
       const fallback = await supabaseAdmin
         .from('users')
-        .select('id, name, email, charity_id, contribution_percentage, created_at')
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (fallback.error) {
         console.error('[admin/users] legacy users select failed:', fallback.error.message)
-        return NextResponse.json({ ok: false, success: false, error: 'Failed to load users' }, { status: 500 })
+        users = authUsers.map((user) => ({
+          id: user.id,
+          full_name: null,
+          email: user.email,
+          role: 'user',
+          charity_id: null,
+          contribution_percentage: null,
+          subscription_status: null,
+          trial_end: null,
+          trial_end_date: null,
+          created_at: null
+        }))
+      } else {
+        users = (fallback.data || []).map((user: any) => ({
+          id: user.id,
+          full_name: user.full_name || user.name || null,
+          email: user.email || null,
+          role: user.role || 'user',
+          charity_id: user.charity_id || null,
+          contribution_percentage: user.contribution_percentage || null,
+          subscription_status: user.subscription_status || null,
+          trial_end: user.trial_end || null,
+          trial_end_date: user.trial_end_date || null,
+          created_at: user.created_at || null
+        }))
       }
-
-      users = (fallback.data || []).map((user: any) => ({
-        id: user.id,
-        full_name: user.name,
-        email: user.email,
-        role: 'user',
-        charity_id: user.charity_id,
-        contribution_percentage: user.contribution_percentage,
-        subscription_status: null,
-        trial_end: null,
-        trial_end_date: null,
-        created_at: user.created_at
-      }))
     }
 
     const userIds = (users || []).map((user) => user.id)
@@ -121,9 +137,23 @@ export async function GET(req: Request) {
       activity: activityByUser.get(user.id) || { score_count: 0, last_score_at: null }
     }))
 
-    return NextResponse.json({ ok: true, success: true, users: normalized, count: normalized.length })
+    return NextResponse.json({
+      ok: true,
+      success: true,
+      data: normalized,
+      users: normalized,
+      count: normalized.length,
+      error: null
+    })
   } catch (err: any) {
     console.error('[admin/users] Unexpected error:', err)
-    return NextResponse.json({ ok: false, success: false, error: err?.message || 'Unable to load users' }, { status: 500 })
+    return NextResponse.json({
+      ok: false,
+      success: false,
+      data: [],
+      users: [],
+      count: 0,
+      error: err?.message || 'Unable to load users'
+    }, { status: 500 })
   }
 }
