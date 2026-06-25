@@ -104,19 +104,6 @@ async function findOrCreateCustomer(userId: string, email?: string | null) {
       .update({ stripe_customer_id: customer.id, updated_at: new Date().toISOString() })
       .eq('id', subscription.id)
     if (updateError) throw updateError
-  } else {
-    const status = logAndValidateSubscriptionStatus(normalizeSubscriptionStatus('trialing'))
-
-    const { error: insertError } = await supabaseAdmin
-      .from('subscriptions')
-      .insert({
-        user_id: userId,
-        stripe_customer_id: customer.id,
-        plan_type: 'monthly',
-        status: normalizeSubscriptionStatus(status),
-        is_trial: true
-      })
-    if (insertError) throw insertError
   }
 
   return customer.id
