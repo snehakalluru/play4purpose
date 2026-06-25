@@ -1,26 +1,23 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { getCharityImage } from "../../lib/charityImages"
 
 export default function CharitySection() {
   const [charities, setCharities] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
     async function load() {
-      const { data } = await supabase
-        .from("charities")
-        .select("*")
-        .limit(3)
-
-      setCharities(data || [])
-      setLoading(false)
+      try {
+        const response = await fetch("/api/charities")
+        const payload = await response.json()
+        setCharities(payload.charities || [])
+      } catch {
+        setCharities([])
+      } finally {
+        setLoading(false)
+      }
     }
 
     load()
@@ -54,40 +51,49 @@ export default function CharitySection() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {charities.map((c) => (
-        <div key={c.id} className="brutal-card flex h-full flex-col p-6 text-slate-950">
-          <div className="mb-5 flex h-16 items-center">
-          {(c.image_url || c.logo_url) && (
-            <img
-              src={c.image_url || c.logo_url}
-              alt={c.name}
-              className="h-14 w-auto max-w-full object-contain"
-            />
-          )}
-            {!c.image_url && !c.logo_url && (
-              <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-lg font-black text-primary">
-                {String(c.name || 'C').slice(0, 1)}
-              </div>
-            )}
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {charities.map((c, index) => {
+        const imageUrl = getCharityImage(c)
+
+        return (
+          <div key={c.id || c.name} className="brutal-card flex h-full flex-col overflow-hidden text-slate-950">
+            <div className="relative aspect-[4/3] overflow-hidden bg-primary/10">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={`${c.name} charity`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className={`charity-image-fallback charity-tone-${index % 4}`}>
+                  <span>{String(c.name || 'C').slice(0, 1)}</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
+              <span className="absolute bottom-3 left-3 brutal-badge bg-white/92 text-slate-950">
+                Supported cause
+              </span>
+            </div>
+
+            <div className="flex flex-1 flex-col p-5">
+              <h3 className="text-xl font-black text-slate-950">{c.name}</h3>
+              <p className="mt-2 flex-1 text-sm leading-6 text-muted">
+                {c.description || 'Players can select this charity during onboarding and direct their chosen contribution toward it.'}
+              </p>
+              {c.website && (
+                <a
+                  href={c.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-5 text-sm font-bold text-primary hover:underline"
+                >
+                  Learn more
+                </a>
+              )}
+            </div>
           </div>
-          <p className="section-eyebrow">Supported cause</p>
-          <h3 className="text-xl font-bold text-slate-950">{c.name}</h3>
-          <p className="mt-2 flex-1 text-sm leading-6 text-muted">
-            {c.description || 'Players can select this charity during onboarding and direct their chosen contribution toward it.'}
-          </p>
-          {c.website && (
-            <a
-              href={c.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 text-sm font-bold text-primary hover:underline"
-            >
-              Learn more
-            </a>
-          )}
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

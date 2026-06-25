@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import CharitySection from '../components/Charity/CharitySection'
 import { createClient } from '@supabase/supabase-js'
+import { getCharityImage } from '../lib/charityImages'
 
 // Revalidate every 60 seconds
 export const revalidate = 60
@@ -39,7 +40,8 @@ async function getStats() {
     totalPlayers: totalPlayers || 0,
     totalScores: totalScores || 0,
     totalRaised: totalRaised.toFixed(2),
-    charityCount: charities?.length || 0
+    charityCount: charities?.length || 0,
+    charities: charities || []
   }
 }
 
@@ -65,6 +67,44 @@ export default async function HomePage() {
       label: 'giving choice'
     }
   ]
+  const heroCharities = (stats.charities || []).slice(0, 4)
+  const faqItems = [
+    {
+      question: 'How does Play4Purpose work?',
+      answer:
+        'Subscribe, choose the charity you want to support, then log your recent golf scores. Eligible scorecards feed your monthly prize draw entry while part of your membership supports charitable causes.'
+    },
+    {
+      question: 'What scores do I enter?',
+      answer:
+        'Players enter genuine golf scores from their rounds. The app keeps your score history visible so you can track entry readiness before joining a monthly draw.'
+    },
+    {
+      question: 'How are winners selected?',
+      answer:
+        'Monthly draws use eligible player entries and prize tiers managed through the platform. Winners can review their status and complete verification from the winnings area.'
+    },
+    {
+      question: 'Can I choose which charity receives support?',
+      answer:
+        'Yes. During onboarding you select a supported charity and contribution percentage, and your chosen cause stays visible in the member experience.'
+    },
+    {
+      question: 'What prizes are available?',
+      answer:
+        'Prize pools are shown in the draw area with clear tier allocations. The homepage highlights the jackpot, second, and third prize rhythm so players understand the monthly structure.'
+    },
+    {
+      question: 'Do I need a card to start?',
+      answer:
+        'No. You can begin with the free trial first, then choose a monthly or yearly membership plan during registration.'
+    },
+    {
+      question: 'Where can I see my entries and winnings?',
+      answer:
+        'After logging in, the dashboard links you to score entry, active draws, charity selection, and winnings so the full loop is kept in one place.'
+    }
+  ]
 
   return (
     <div className="min-h-screen bg-background text-slate-950 overflow-hidden">
@@ -79,6 +119,9 @@ export default async function HomePage() {
             </Link>
             <Link href="#how-it-works" className="hidden text-sm font-bold text-muted hover:text-primary sm:inline">
               How It Works
+            </Link>
+            <Link href="#faq" className="hidden text-sm font-bold text-muted hover:text-primary md:inline">
+              FAQ
             </Link>
             <Link href="/login" className="rounded-full border-2 border-black/10 bg-white/70 px-4 py-2 text-sm font-bold text-slate-950 hover:border-primary">
               Login
@@ -146,6 +189,42 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
+
+            {heroCharities.length > 0 && (
+              <div className="mt-8 max-w-2xl">
+                <p className="text-xs font-black uppercase tracking-wide text-muted">Featured charities</p>
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {heroCharities.map((charity: any, index: number) => {
+                    const imageUrl = getCharityImage(charity)
+
+                    return (
+                      <a
+                        key={charity.id || charity.name}
+                        href="#charities"
+                        className="group rounded-md border border-black/10 bg-white/82 p-3 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-primary/40"
+                      >
+                        <div className="charity-image h-20">
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={`${charity.name} charity`}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className={`charity-image-fallback charity-tone-${index % 4}`}>
+                              <span>{String(charity.name || 'C').slice(0, 1)}</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="mt-2 line-clamp-2 text-sm font-black leading-tight text-slate-950 group-hover:text-primary">
+                          {charity.name}
+                        </p>
+                      </a>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="relative">
@@ -363,6 +442,34 @@ export default async function HomePage() {
             <Link href="/draws" className="mt-8 inline-flex rounded-md bg-white px-4 py-3 text-sm font-black text-slate-950">
               View Draws
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="px-6 py-20 bg-surface/50">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-12 text-center">
+            <p className="section-eyebrow">Help center</p>
+            <h2 className="mt-2 text-4xl font-black text-slate-950 md:text-5xl">Frequently Asked Questions</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg leading-7 text-muted">
+              Quick answers for the golf scores, prize draw, charity choice, and membership flow.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {faqItems.map((item) => (
+              <details key={item.question} className="faq-item brutal-card group overflow-hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 text-left">
+                  <span className="text-lg font-black text-slate-950">{item.question}</span>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-black/10 bg-white text-xl font-black text-primary transition group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <div className="border-t border-black/10 px-6 pb-6 pt-4">
+                  <p className="text-sm leading-7 text-muted">{item.answer}</p>
+                </div>
+              </details>
+            ))}
           </div>
         </div>
       </section>
