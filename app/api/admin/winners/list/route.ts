@@ -28,6 +28,22 @@ async function fetchWinners() {
     {
       select: 'id, draw_id, user_id, prize_amount, verification_status, payment_status, proof_url, created_at',
       normalize: (winner: any) => ({ ...winner, position: null, amount: winner.prize_amount ?? 0 })
+    },
+    {
+      select: 'id, draw_id, user_id, position, amount, prize_amount, verification_status, payment_status, created_at',
+      normalize: (winner: any) => ({ ...winner, proof_url: null })
+    },
+    {
+      select: 'id, draw_id, user_id, position, prize_amount, verification_status, payment_status, created_at',
+      normalize: (winner: any) => ({ ...winner, proof_url: null, amount: winner.prize_amount ?? 0 })
+    },
+    {
+      select: 'id, draw_id, user_id, amount, prize_amount, verification_status, payment_status, created_at',
+      normalize: (winner: any) => ({ ...winner, proof_url: null, position: null })
+    },
+    {
+      select: 'id, draw_id, user_id, prize_amount, verification_status, payment_status, created_at',
+      normalize: (winner: any) => ({ ...winner, proof_url: null, position: null, amount: winner.prize_amount ?? 0 })
     }
   ]
 
@@ -47,7 +63,11 @@ async function fetchWinners() {
     }
 
     lastResult = result
-    if (!isMissingColumnError(result.error, 'amount') && !isMissingColumnError(result.error, 'position')) {
+    if (
+      !isMissingColumnError(result.error, 'amount') &&
+      !isMissingColumnError(result.error, 'position') &&
+      !isMissingColumnError(result.error, 'proof_url')
+    ) {
       return result
     }
 

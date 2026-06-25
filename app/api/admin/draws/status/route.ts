@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing draw_id or status' }, { status: 400 })
     }
 
-    const validStatuses = ['draft', 'scheduled', 'running', 'completed']
+    const validStatuses = ['draft', 'scheduled', 'running', 'completed', 'simulation', 'published']
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
     }

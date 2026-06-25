@@ -6,6 +6,9 @@ export default function AdminDrawsPanel() {
   const [draws, setDraws] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [drawMode, setDrawMode] = useState<'random' | 'algorithmic'>('random')
+  const [analysis, setAnalysis] = useState<any>(null)
+  const [running, setRunning] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     draw_date: '',
@@ -67,23 +70,30 @@ export default function AdminDrawsPanel() {
     fetchDraws()
   }
 
-  async function runDraw() {
-    if (!confirm('Run the draw now? This will select winners and cannot be undone.')) return
+  async function runDraw(action: 'simulate' | 'publish') {
+    if (action === 'publish' && !confirm('Publish this month\'s draw results now?')) return
 
     const { data } = await supabase.auth.getSession()
     const token = data.session?.access_token
     if (!token) return
 
+    setRunning(true)
+    setError(null)
+
     const res = await fetch('/api/admin/run-draw', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action, mode: drawMode })
     })
     const json = await res.json()
+    setRunning(false)
+
     if (res.ok) {
-      alert(`Draw completed! Winners selected.`)
+      setAnalysis(json.analysis || null)
+      if (action === 'publish') alert('Draw results published.')
       fetchDraws()
     } else {
-      alert(json?.error || 'Failed to run draw')
+      setError(json?.error || 'Failed to run draw')
     }
   }
 
@@ -140,9 +150,62 @@ export default function AdminDrawsPanel() {
         </button>
       </form>
 
-      <button onClick={runDraw} className="brutal-btn brutal-btn-primary">
-        Run New Draw
-      </button>
+      <div className="flex flex-col gap-3 rounded-lg bg-surface p-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setDrawMode('random')}
+            className={`brutal-btn ${drawMode === 'random' ? 'brutal-btn-primary' : 'brutal-btn-outline'}`}
+          >
+            Random
+          </button>
+          <button
+            type="button"
+            onClick={() => setDrawMode('algorithmic')}
+            className={`brutal-btn ${drawMode === 'algorithmic' ? 'brutal-btn-primary' : 'brutal-btn-outline'}`}
+          >
+            Algorithmic
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => runDraw('simulate')} disabled={running} className="brutal-btn brutal-btn-outline">
+            {running ? 'Running...' : 'Simulate'}
+          </button>
+          <button onClick={() => runDraw('publish')} disabled={running} className="brutal-btn brutal-btn-primary">
+            Publish Draw
+          </button>
+        </div>
+      </div>
+
+      {analysis && (
+        <div className="brutal-card p-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+            <div>
+              <div className="text-xs font-bold uppercase text-muted">Mode</div>
+              <div className="font-black capitalize">{analysis.mode}</div>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-muted">Numbers</div>
+              <div className="font-black">{analysis.winning_numbers?.join(', ')}</div>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-muted">5 Match</div>
+              <div className="font-black">{analysis.match_counts?.['5'] || 0}</div>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-muted">4 Match</div>
+              <div className="font-black">{analysis.match_counts?.['4'] || 0}</div>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-muted">3 Match</div>
+              <div className="font-black">{analysis.match_counts?.['3'] || 0}</div>
+            </div>
+          </div>
+          <div className="mt-3 text-sm text-muted">
+            Prize pool £{Number(analysis.prize_pool || 0).toFixed(2)} · Rollover £{Number(analysis.rollover_to_next_month || 0).toFixed(2)}
+          </div>
+        </div>
+      )}
 
       <div className="brutal-card overflow-hidden">
         <div className="overflow-x-auto">
@@ -151,7 +214,9 @@ export default function AdminDrawsPanel() {
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-bold">Draw Date</th>
                 <th className="px-4 py-3 text-left text-sm font-bold">Status</th>
+                <th className="px-4 py-3 text-left text-sm font-bold">Type</th>
                 <th className="px-4 py-3 text-left text-sm font-bold">Prize Pool</th>
+                <th className="px-4 py-3 text-left text-sm font-bold">Jackpot</th>
                 <th className="px-4 py-3 text-left text-sm font-bold">Actions</th>
               </tr>
             </thead>
@@ -161,14 +226,17 @@ export default function AdminDrawsPanel() {
                   <td className="px-4 py-3 text-sm">{draw.draw_date}</td>
                   <td className="px-4 py-3 text-sm">
                     <span className={`brutal-badge ${
-                      draw.status === 'completed' ? 'bg-green-500 text-white' :
+                      draw.status === 'published' || draw.status === 'completed' ? 'bg-green-500 text-white' :
+                      draw.status === 'simulation' ? 'bg-blue-500 text-white' :
                       draw.status === 'running' ? 'bg-yellow-500 text-black' :
                       'bg-surface'
                     }`}>
                       {draw.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm">£{draw.prize_pool?.toFixed(2) || '0.00'}</td>
+                  <td className="px-4 py-3 text-sm capitalize">{draw.draw_type || draw.mode || 'random'}</td>
+                  <td className="px-4 py-3 text-sm">£{Number(draw.prize_pool || 0).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm">£{Number(draw.jackpot_amount || 0).toFixed(2)}</td>
                   <td className="px-4 py-3 text-sm">
                     <select
                       value={draw.status}
@@ -180,6 +248,8 @@ export default function AdminDrawsPanel() {
                       <option value="scheduled">Scheduled</option>
                       <option value="running">Running</option>
                       <option value="completed">Completed</option>
+                      <option value="simulation">Simulation</option>
+                      <option value="published">Published</option>
                     </select>
                   </td>
                 </tr>

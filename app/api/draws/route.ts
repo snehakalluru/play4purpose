@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../services/supabaseAdmin'
 
+function isSchemaError(error: any) {
+  const message = String(error?.message || '')
+  return message.includes('schema cache') || message.includes('column') || message.includes('does not exist')
+}
+
+function isMissingDrawEntries(error: any) {
+  const message = String(error?.message || '')
+  return message.includes('draw_entries') && isSchemaError(error)
+}
+
 async function ensureDrawExists(createdBy: string) {
   const { data: existing, error: existingError } = await supabaseAdmin
     .from('draws')
@@ -18,20 +28,29 @@ async function ensureDrawExists(createdBy: string) {
     .toISOString()
     .slice(0, 10)
 
-  const { error } = await supabaseAdmin
-    .from('draws')
-    .insert({
+  const payload = {
       name: drawName,
       draw_date: drawDate,
       status: 'scheduled',
+      draw_type: 'random',
       prize_pool: 0,
       jackpot_amount: 0,
       second_prize: 0,
       third_prize: 0,
       created_by: createdBy
-    })
+    }
 
-  return { error }
+  let result = await supabaseAdmin.from('draws').insert(payload)
+  if (result.error && isSchemaError(result.error)) {
+    result = await supabaseAdmin.from('draws').insert({
+      draw_date: drawDate,
+      draw_type: 'random',
+      numbers: [],
+      status: 'simulation'
+    })
+  }
+
+  return { error: result.error }
 }
 
 export async function GET(req: Request) {
@@ -65,9 +84,10 @@ export async function GET(req: Request) {
       // Return empty draws on error
     }
 
-    // For each draw, check if user has an entry
+    // For each draw, check if user has an entry. If the DB has not received
+    // the draw_entries migration yet, still return draws instead of failing.
     const drawsWithEntry = await Promise.all((draws || []).map(async (draw: any) => {
-      const { data: entry } = await supabaseAdmin
+      const { data: entry, error: entryError } = await supabaseAdmin
         .from('draw_entries')
         .select('entry_number')
         .eq('draw_id', draw.id)
@@ -75,10 +95,15 @@ export async function GET(req: Request) {
         .limit(1)
         .maybeSingle()
 
+      if (entryError && !isMissingDrawEntries(entryError)) {
+        console.error('[draws] entry lookup failed:', entryError.message)
+      }
+
       return {
         ...draw,
-        hasEntry: !!entry,
-        entryNumber: entry?.entry_number || null
+        hasEntry: entryError ? false : !!entry,
+        entryNumber: entryError ? null : entry?.entry_number || null,
+        entriesUnavailable: isMissingDrawEntries(entryError)
       }
     }))
 

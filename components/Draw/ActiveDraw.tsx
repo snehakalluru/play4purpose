@@ -2,6 +2,15 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../../services/supabaseClient'
 
+function isMissingDrawEntries(error: any) {
+  const message = String(error?.message || '')
+  return message.includes('draw_entries') && (
+    message.includes('schema cache') ||
+    message.includes('does not exist') ||
+    message.includes('Could not find the table')
+  )
+}
+
 export default function ActiveDraw() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -54,6 +63,12 @@ export default function ActiveDraw() {
         .order('created_at', { ascending: false })
 
       if (entriesErr) {
+        if (isMissingDrawEntries(entriesErr)) {
+          setEntries([])
+          setLoading(false)
+          return
+        }
+
         setError(entriesErr.message)
         setLoading(false)
         return

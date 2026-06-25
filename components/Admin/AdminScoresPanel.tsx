@@ -7,6 +7,9 @@ export default function AdminScoresPanel() {
   const [scores, setScores] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const [editDate, setEditDate] = useState('')
 
   useEffect(() => {
     fetchScores()
@@ -41,6 +44,38 @@ export default function AdminScoresPanel() {
     }
   }
 
+  function startEdit(score: any) {
+    setEditingId(score.id)
+    setEditValue(String(score.score_value ?? ''))
+    setEditDate(score.score_date ? String(score.score_date).slice(0, 10) : '')
+  }
+
+  async function saveScore(scoreId: string) {
+    setError(null)
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    if (!token) {
+      setError('Admin session not found. Please sign in again.')
+      return
+    }
+
+    const res = await fetch('/api/admin/scores', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ score_id: scoreId, score_value: Number(editValue), score_date: editDate })
+    })
+    const json = await res.json()
+    if (!res.ok || !json.ok) {
+      setError(json?.error || 'Failed to update score')
+      return
+    }
+
+    setEditingId(null)
+    setEditValue('')
+    setEditDate('')
+    fetchScores()
+  }
+
   if (loading) return <div>Loading scores...</div>
   if (error) return <div className="brutal-card p-6 text-red-400">{error}</div>
 
@@ -54,15 +89,46 @@ export default function AdminScoresPanel() {
               <th className="px-4 py-3 text-left text-sm font-bold">Score</th>
               <th className="px-4 py-3 text-left text-sm font-bold">Date Played</th>
               <th className="px-4 py-3 text-left text-sm font-bold">Submitted</th>
+              <th className="px-4 py-3 text-left text-sm font-bold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {scores.map((score) => (
               <tr key={score.id}>
                 <td className="px-4 py-3 text-sm">{score.user_id}</td>
-                <td className="px-4 py-3 text-sm font-bold">{score.score_value}</td>
-                <td className="px-4 py-3 text-sm">{new Date(score.score_date).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-sm font-bold">
+                  {editingId === score.id ? (
+                    <input
+                      type="number"
+                      min="1"
+                      max="200"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      className="brutal-input w-24"
+                    />
+                  ) : score.score_value}
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  {editingId === score.id ? (
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      className="brutal-input"
+                    />
+                  ) : new Date(score.score_date).toLocaleDateString()}
+                </td>
                 <td className="px-4 py-3 text-sm">{score.created_at ? new Date(score.created_at).toLocaleString() : '-'}</td>
+                <td className="px-4 py-3 text-sm">
+                  {editingId === score.id ? (
+                    <div className="flex gap-2">
+                      <button onClick={() => saveScore(score.id)} className="brutal-btn bg-green-600 text-white text-xs">Save</button>
+                      <button onClick={() => setEditingId(null)} className="brutal-btn brutal-btn-outline text-xs">Cancel</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => startEdit(score)} className="brutal-btn brutal-btn-outline text-xs">Edit</button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
