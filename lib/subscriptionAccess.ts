@@ -29,5 +29,5 @@ export async function getSubscriptionAccess(userId: string): Promise<Subscriptio
     profile = result.data
   } catch (e) {}
 
-  return { allowed: true, subscription: subscription || profile || { status: 'trialing' } }
+  return { allowed: true, subscription: subscription || profile || { status: 'trial_active' } }
 }

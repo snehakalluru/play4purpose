@@ -1,29 +1,31 @@
-const VALID_SUBSCRIPTION_STATUSES = ['active', 'cancelled', 'lapsed', 'trialing', 'past_due', 'incomplete'] as const
+const VALID_SUBSCRIPTION_STATUSES = ['active', 'trial_active', 'expired'] as const
 
 export type SubscriptionStatus = (typeof VALID_SUBSCRIPTION_STATUSES)[number]
 
 export function normalizeSubscriptionStatus(stripeStatus: string): SubscriptionStatus {
-  if (!stripeStatus) return 'incomplete'
+  if (!stripeStatus) return 'expired'
 
   const status = stripeStatus.toLowerCase().trim()
 
   const map: Record<string, SubscriptionStatus> = {
     active: 'active',
-    trialing: 'trialing',
-    canceled: 'cancelled',
-    cancelled: 'cancelled',
+    trialing: 'trial_active',
+    trial_active: 'trial_active',
+    canceled: 'expired',
+    cancelled: 'expired',
     cancel_at_period_end: 'active',
-    past_due: 'past_due',
-    unpaid: 'past_due',
-    incomplete: 'incomplete',
-    incomplete_expired: 'incomplete',
-    lapsed: 'lapsed'
+    past_due: 'expired',
+    unpaid: 'expired',
+    incomplete: 'expired',
+    incomplete_expired: 'expired',
+    lapsed: 'expired',
+    expired: 'expired'
   }
 
-  const normalized = map[status] || 'incomplete'
+  const normalized = map[status] || 'expired'
 
   if (!VALID_SUBSCRIPTION_STATUSES.includes(normalized)) {
-    return 'incomplete'
+    return 'expired'
   }
 
   return normalized

@@ -129,9 +129,9 @@ export async function createCheckoutSession(req: Request) {
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      mode: 'payment',
+      mode: 'subscription',
       line_items: [{ price: priceId, quantity }],
-      success_url: `${appUrl}/success`,
+      success_url: `${appUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/cancel`,
       metadata: {
         userId,
@@ -139,7 +139,7 @@ export async function createCheckoutSession(req: Request) {
         priceId,
         plan_type: plan
       },
-      payment_intent_data: {
+      subscription_data: {
         metadata: {
           userId,
           user_id: userId,
@@ -239,7 +239,7 @@ async function findUserIdForStripeSubscription(subscription: Stripe.Subscription
 
 function getProfileSubscriptionStatus(status: string) {
   if (status === 'active') return 'active'
-  if (status === 'trialing') return 'trial_active'
+  if (status === 'trial_active') return 'trial_active'
   return 'expired'
 }
 
@@ -263,7 +263,7 @@ async function upsertStripeSubscription(subscription: Stripe.Subscription, rawSt
       stripe_subscription_id: subscription.id,
       plan_type: planType,
       status: normalizeSubscriptionStatus(status),
-      is_trial: status === 'trialing',
+      is_trial: status === 'trial_active',
       started_at: fromStripeTimestamp(subscription.start_date) || now,
       current_period_start: fromStripeTimestamp(subscription.current_period_start),
       current_period_end: fromStripeTimestamp(subscription.current_period_end),

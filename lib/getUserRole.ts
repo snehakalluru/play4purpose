@@ -62,7 +62,6 @@ function readSupabaseAuthCookie(cookieSource: {
 function hasActiveOrTrialAccess(subscription: any): boolean {
   if (!subscription) return false
   if (subscription.status === 'active') return true
-  if (subscription.status === 'trialing') return true
   if (subscription.status === 'trial_active') return true
   return false
 }

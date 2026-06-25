@@ -34,7 +34,7 @@ async function getEligibleUserIds(): Promise<{ ids: string[]; count: number }> {
   const { data: subs } = await supabaseAdmin
     .from('subscriptions')
     .select('user_id,status')
-    .in('status', ['active', 'trialing'])
+    .in('status', ['active', 'trial_active'])
   if (!subs || subs.length === 0) return { ids: [], count: 0 }
   const subUserIds = subs.map(s => s.user_id)
 
