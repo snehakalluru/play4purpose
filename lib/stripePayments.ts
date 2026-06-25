@@ -18,16 +18,32 @@ function fromStripeTimestamp(timestamp?: number | null) {
   return timestamp ? new Date(timestamp * 1000).toISOString() : null
 }
 
-function getAppUrl() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+function getRequestOrigin(req: Request) {
+  const forwardedProto = req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim()
+  const forwardedHost = req.headers.get('x-forwarded-host')?.split(',')[0]?.trim()
+  const host = forwardedHost || req.headers.get('host')
+  if (!host) return null
+
+  const proto = forwardedProto || (host.includes('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https')
+  return `${proto}://${host}`
+}
+
+function getAppUrl(req: Request) {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL
+  const requestOrigin = getRequestOrigin(req)
+  const secureRequestOrigin = requestOrigin?.startsWith('https://') ? requestOrigin : null
+  const appUrl = secureRequestOrigin || configuredUrl || requestOrigin
   if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not set')
 
   const parsed = new URL(appUrl)
   const isLocalhost = ['localhost', '127.0.0.1'].includes(parsed.hostname)
-  if (process.env.NODE_ENV === 'production' && parsed.protocol !== 'https:') {
-    throw new Error('NEXT_PUBLIC_APP_URL must use HTTPS in production')
-  }
-  if (!isLocalhost && parsed.protocol !== 'https:') {
+
+  if (parsed.protocol !== 'https:' && !isLocalhost) {
+    if (requestOrigin) {
+      const requestParsed = new URL(requestOrigin)
+      if (requestParsed.protocol === 'https:') return requestParsed.origin
+    }
+
     throw new Error('NEXT_PUBLIC_APP_URL must use HTTPS outside local development')
   }
 
@@ -124,7 +140,7 @@ export async function createCheckoutSession(req: Request) {
     const quantity = Number.isInteger(requestedQuantity) && requestedQuantity > 0 ? requestedQuantity : 1
     const user = auth.user
     const userId = user.id
-    const appUrl = getAppUrl()
+    const appUrl = getAppUrl(req)
     const customerId = await findOrCreateCustomer(userId, user.email)
 
     const session = await stripe.checkout.sessions.create({
