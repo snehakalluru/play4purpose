@@ -47,13 +47,32 @@ export default function DrawsPage() {
 
   if (loading) return <div className="app-page flex items-center justify-center text-muted">Loading draws...</div>
 
+  const totalPrizePool = draws.reduce((sum, draw) => sum + Number(draw.prize_pool || 0), 0)
+  const enteredDraws = draws.filter((draw) => draw.hasEntry).length
+
   return (
     <div className="app-page">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-6">
-          <p className="section-eyebrow">Prize room</p>
-          <h1 className="mt-2 text-3xl font-black text-slate-950 md:text-5xl">Prize Draws</h1>
-          <p className="mt-2 text-muted">See upcoming draws, entry status, prize pools, and winning numbers.</p>
+        <div className="course-card mb-6 rounded-md p-6 text-white md:p-8">
+          <p className="text-sm font-bold uppercase tracking-widest text-white/75">Prize room</p>
+          <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-black md:text-5xl">Prize Draws</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/80 md:text-base">
+                Play, win, and give through monthly draws tied to your member activity.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm font-bold sm:min-w-80">
+              <div className="rounded-md border border-white/20 bg-white/10 p-3 backdrop-blur">
+                <span className="block text-2xl font-black">£{totalPrizePool.toFixed(2)}</span>
+                Listed prize pool
+              </div>
+              <div className="rounded-md border border-white/20 bg-white/10 p-3 backdrop-blur">
+                <span className="block text-2xl font-black">{enteredDraws}</span>
+                Entered draws
+              </div>
+            </div>
+          </div>
         </div>
 
         {draws.length === 0 ? (
@@ -72,7 +91,7 @@ export default function DrawsPage() {
                   </div>
                   {draw.hasEntry ? (
                     <div className="brutal-badge bg-green-500 text-white">
-                      ✓ Entered
+                      Entered
                     </div>
                   ) : (
                     <div className="brutal-badge bg-yellow-500 text-black">
@@ -81,16 +100,17 @@ export default function DrawsPage() {
                   )}
                 </div>
 
-                {draw.prize_pool > 0 && (
-                  <div className="mb-4 rounded-md bg-white/70 p-3">
-                    <p className="text-sm font-semibold">Prize Pool: £{draw.prize_pool.toFixed(2)}</p>
-                    <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
-                      <div>Jackpot: £{draw.jackpot_amount?.toFixed(2)}</div>
-                      <div>2nd: £{draw.second_prize?.toFixed(2)}</div>
-                      <div>3rd: £{draw.third_prize?.toFixed(2)}</div>
-                    </div>
+                <div className="mb-4 rounded-md bg-white/70 p-4">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-sm font-bold text-muted">Prize Pool</p>
+                    <p className="text-2xl font-black text-slate-950">£{Number(draw.prize_pool || 0).toFixed(2)}</p>
                   </div>
-                )}
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-xs font-bold text-muted">
+                    <div className="rounded-md bg-white/80 p-2">Jackpot<br />£{Number(draw.jackpot_amount || 0).toFixed(2)}</div>
+                    <div className="rounded-md bg-white/80 p-2">2nd<br />£{Number(draw.second_prize || 0).toFixed(2)}</div>
+                    <div className="rounded-md bg-white/80 p-2">3rd<br />£{Number(draw.third_prize || 0).toFixed(2)}</div>
+                  </div>
+                </div>
 
                 {draw.hasEntry && draw.entryNumber && (
                   <div className="mb-4 rounded-md border border-accent/30 bg-accent/10 p-3">
