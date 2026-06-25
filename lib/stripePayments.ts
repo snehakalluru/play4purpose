@@ -8,6 +8,11 @@ const VALID_PLANS = ['monthly', 'yearly'] as const
 
 type PaymentPlan = (typeof VALID_PLANS)[number]
 
+const PLAN_PRICES: Record<PaymentPlan, { amount: number; interval: 'month' | 'year'; lookupKey: string }> = {
+  monthly: { amount: 1000, interval: 'month', lookupKey: 'play4purpose_monthly_membership' },
+  yearly: { amount: 10000, interval: 'year', lookupKey: 'play4purpose_yearly_membership' }
+}
+
 function logAndValidateSubscriptionStatus(status: string) {
   console.log('SUBSCRIPTION STATUS BEFORE INSERT:', status)
   assertValidSubscriptionStatus(status)
@@ -54,16 +59,74 @@ function isPaymentPlan(plan: unknown): plan is PaymentPlan {
   return typeof plan === 'string' && VALID_PLANS.includes(plan as PaymentPlan)
 }
 
-function getPriceIdForPlan(plan: PaymentPlan) {
-  const priceId = plan === 'monthly'
+async function getOrCreateProductId() {
+  const configuredProductId = process.env.STRIPE_PRODUCT_ID
+
+  if (configuredProductId) {
+    try {
+      const product = await stripe.products.retrieve(configuredProductId)
+      if (!product.deleted) return product.id
+    } catch (err: any) {
+      if (err?.code !== 'resource_missing') throw err
+    }
+  }
+
+  const product = await stripe.products.create(
+    {
+      name: 'Play4Purpose Membership',
+      metadata: { app: 'play4purpose' }
+    },
+    { idempotencyKey: 'play4purpose-membership-product' }
+  )
+
+  return product.id
+}
+
+async function findPriceByLookupKey(lookupKey: string) {
+  const { data } = await stripe.prices.list({ lookup_keys: [lookupKey], limit: 1 })
+  return data[0] || null
+}
+
+async function getPriceIdForPlan(plan: PaymentPlan) {
+  const configuredPriceId = plan === 'monthly'
     ? process.env.STRIPE_PRICE_MONTHLY
     : process.env.STRIPE_PRICE_YEARLY
 
-  if (!priceId) {
-    throw new Error(`Missing Stripe price id for ${plan} plan`)
+  if (configuredPriceId) {
+    try {
+      const price = await stripe.prices.retrieve(configuredPriceId)
+      if (price.active) return price.id
+    } catch (err: any) {
+      if (err?.code !== 'resource_missing') throw err
+      console.warn(`[stripe checkout] configured ${plan} price does not exist; creating fallback price`)
+    }
   }
 
-  return priceId
+  const config = PLAN_PRICES[plan]
+  const existingPrice = await findPriceByLookupKey(config.lookupKey)
+  if (existingPrice) {
+    if (!existingPrice.active) {
+      const updatedPrice = await stripe.prices.update(existingPrice.id, { active: true })
+      return updatedPrice.id
+    }
+
+    return existingPrice.id
+  }
+
+  const productId = await getOrCreateProductId()
+  const price = await stripe.prices.create(
+    {
+      product: productId,
+      currency: 'gbp',
+      unit_amount: config.amount,
+      recurring: { interval: config.interval },
+      lookup_key: config.lookupKey,
+      metadata: { app: 'play4purpose', plan_type: plan }
+    },
+    { idempotencyKey: `play4purpose-${plan}-membership-price` }
+  )
+
+  return price.id
 }
 
 async function getAuthenticatedUser(req: Request) {
@@ -123,7 +186,7 @@ export async function createCheckoutSession(req: Request) {
       return NextResponse.json({ error: 'Invalid payment plan' }, { status: 400 })
     }
 
-    const priceId = getPriceIdForPlan(plan)
+    const priceId = await getPriceIdForPlan(plan)
     const quantity = Number.isInteger(requestedQuantity) && requestedQuantity > 0 ? requestedQuantity : 1
     const user = auth.user
     const userId = user.id
