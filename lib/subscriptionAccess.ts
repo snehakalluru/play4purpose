@@ -6,6 +6,23 @@ export type SubscriptionAccess = {
   reason?: string
 }
 
+function trialHasTimeRemaining(subscription: any) {
+  const endDate = subscription?.trial_end_date || subscription?.trial_end
+  if (!endDate) return true
+
+  const endTime = Date.parse(String(endDate))
+  if (Number.isNaN(endTime)) return false
+
+  return Date.now() < endTime + 24 * 60 * 60 * 1000
+}
+
+function hasActiveAccess(subscription: any) {
+  const status = subscription?.status || subscription?.subscription_status
+  if (status === 'active') return true
+  if (status === 'trial_active') return trialHasTimeRemaining(subscription)
+  return false
+}
+
 export async function getSubscriptionAccess(userId: string): Promise<SubscriptionAccess> {
   let subscription: any = null
   try {
@@ -29,5 +46,12 @@ export async function getSubscriptionAccess(userId: string): Promise<Subscriptio
     profile = result.data
   } catch (e) {}
 
-  return { allowed: true, subscription: subscription || profile || { status: 'trial_active' } }
+  const effectiveSubscription = subscription || profile
+  const allowed = hasActiveAccess(effectiveSubscription)
+
+  return {
+    allowed,
+    subscription: effectiveSubscription,
+    reason: allowed ? undefined : 'Active subscription or trial required'
+  }
 }

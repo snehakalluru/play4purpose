@@ -62,7 +62,15 @@ function readSupabaseAuthCookie(cookieSource: {
 function hasActiveOrTrialAccess(subscription: any): boolean {
   if (!subscription) return false
   if (subscription.status === 'active') return true
-  if (subscription.status === 'trial_active') return true
+  if (subscription.status === 'trial_active') {
+    const trialEnd = subscription.trial_end_date || subscription.trial_end
+    if (!trialEnd) return true
+
+    const trialEndTime = Date.parse(String(trialEnd))
+    if (Number.isNaN(trialEndTime)) return false
+
+    return Date.now() < trialEndTime + 24 * 60 * 60 * 1000
+  }
   return false
 }
 

@@ -11,6 +11,8 @@ export default function UploadProofPage() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf']
+  const maxFileSize = 10 * 1024 * 1024
 
   useEffect(() => {
     async function checkAuth() {
@@ -23,6 +25,8 @@ export default function UploadProofPage() {
 
   async function uploadProof() {
     if (!file) return setError('Please select a file')
+    if (!allowedTypes.includes(file.type)) return setError('Accepted formats are JPG, PNG, and PDF.')
+    if (file.size > maxFileSize) return setError('Proof file must be 10MB or smaller.')
     setUploading(true)
     setError(null)
 
@@ -97,7 +101,23 @@ export default function UploadProofPage() {
                 placeholder="Choose a file..."
                 type="file"
                 accept=".jpg,.jpeg,.png,.pdf"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const selected = e.target.files?.[0] || null
+                  setError(null)
+                  if (selected && !allowedTypes.includes(selected.type)) {
+                    setFile(null)
+                    e.target.value = ''
+                    setError('Accepted formats are JPG, PNG, and PDF.')
+                    return
+                  }
+                  if (selected && selected.size > maxFileSize) {
+                    setFile(null)
+                    e.target.value = ''
+                    setError('Proof file must be 10MB or smaller.')
+                    return
+                  }
+                  setFile(selected)
+                }}
                 className="w-full px-3 py-2 rounded-md bg-surface"
               />
             </div>

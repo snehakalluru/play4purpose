@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { charity_id, contribution_percentage } = body
     if (!charity_id) return NextResponse.json({ error: 'Charity ID is required' }, { status: 400 })
-    const contribution = Math.max(10, Math.min(50, Number(contribution_percentage) || 10))
+    const contribution = Math.max(10, Math.min(100, Number(contribution_percentage) || 10))
     try {
       await supabaseAdmin.from('user_charities').upsert({ user_id: userId, charity_id, contribution_percentage: contribution }, { onConflict: 'user_id' })
     } catch (e) { console.error(e) }

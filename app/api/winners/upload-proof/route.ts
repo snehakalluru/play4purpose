@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../services/supabaseAdmin'
 import { requireAdmin } from '../../../../lib/adminUtils'
 
+function isAllowedProofUrl(fileUrl: string) {
+  try {
+    const parsed = new URL(fileUrl)
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false
+    return /\.(jpe?g|png|pdf)(\?.*)?$/i.test(parsed.pathname + parsed.search)
+  } catch {
+    return false
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const authHeader = req.headers.get('authorization')
@@ -22,6 +32,9 @@ export async function POST(req: Request) {
     }
     if (!file_url || typeof file_url !== 'string') {
       return NextResponse.json({ error: 'file_url is required' }, { status: 400 })
+    }
+    if (!isAllowedProofUrl(file_url)) {
+      return NextResponse.json({ error: 'Proof must be a valid JPG, PNG, or PDF URL' }, { status: 400 })
     }
 
     // Allow admins to upload proof for any winner; users can only update their own winners.

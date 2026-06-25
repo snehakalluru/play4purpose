@@ -8,6 +8,7 @@ export default function CharitySelector({ selectedCharity, onSelect, contributio
   onContributionChange: (value: number) => void
 }) {
   const [charities, setCharities] = useState<any[]>([])
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,6 +23,13 @@ export default function CharitySelector({ selectedCharity, onSelect, contributio
   }
 
   const contributionOptions = [10, 15, 20, 25, 50]
+  const filteredCharities = charities.filter((charity) => {
+    const query = search.trim().toLowerCase()
+    if (!query) return true
+    return [charity.name, charity.description, charity.website]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query))
+  })
 
   if (loading) return <div className="text-center py-8 text-slate-700">Loading charities...</div>
   if (charities.length === 0) {
@@ -40,8 +48,19 @@ export default function CharitySelector({ selectedCharity, onSelect, contributio
       {/* Charity Selection */}
       <div>
         <label className="block text-sm font-bold mb-3 text-slate-800">Choose Your Charity</label>
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="brutal-input mb-4 w-full"
+          placeholder="Search charities"
+          aria-label="Search charities"
+        />
+        {filteredCharities.length === 0 && (
+          <p className="brutal-card mb-4 p-4 text-center text-sm text-muted">No charities match your search.</p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {charities.map((charity) => (
+          {filteredCharities.map((charity) => (
             <div
               key={charity.id}
               onClick={() => onSelect(charity.id)}
@@ -83,6 +102,7 @@ export default function CharitySelector({ selectedCharity, onSelect, contributio
           <div className="flex gap-3">
             {contributionOptions.map((option) => (
               <button
+                type="button"
                 key={option}
                 onClick={() => onContributionChange(option)}
                 className={`flex-1 py-3 rounded-lg font-bold transition-all duration-300 ${
@@ -95,8 +115,22 @@ export default function CharitySelector({ selectedCharity, onSelect, contributio
               </button>
             ))}
           </div>
+          <div className="mt-4">
+            <label htmlFor="custom-contribution" className="block text-xs font-bold text-muted">
+              Custom contribution
+            </label>
+            <input
+              id="custom-contribution"
+              type="number"
+              min={10}
+              max={100}
+              value={contribution}
+              onChange={(e) => onContributionChange(Math.max(10, Math.min(100, Number(e.target.value) || 10)))}
+              className="brutal-input mt-2 w-full"
+            />
+          </div>
           <p className="text-xs text-muted mt-2 text-center">
-            Choose how much of your subscription goes to charity
+            Minimum contribution is 10%.
           </p>
         </div>
       )}

@@ -7,7 +7,7 @@ import AdminScoresPanel from './AdminScoresPanel'
 import AdminWinnersPanel from './AdminWinnersPanel'
 import AdminPayoutsPanel from './AdminPayoutsPanel'
 
-type Tab = 'overview' | 'users' | 'scores' | 'draws' | 'winners' | 'payouts' | 'charities'
+type Tab = 'overview' | 'users' | 'scores' | 'draws' | 'winners' | 'payouts' | 'charities' | 'reports'
 
 export default function AdminPageClient() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -17,7 +17,12 @@ export default function AdminPageClient() {
     totalScores: 0,
     totalDraws: 0,
     totalWinners: 0,
-    totalPrizePool: 0
+    totalPrizePool: 0,
+    activeDraws: 0,
+    completedDraws: 0,
+    activeCharities: 0,
+    totalCharityContribution: 0,
+    averageCharityContribution: 0
   })
   const [loading, setLoading] = useState(true)
 
@@ -54,33 +59,47 @@ export default function AdminPageClient() {
     try {
       const token = session.access_token
 
-      const [usersRes, subsRes, scoresRes, drawsRes, winnersRes] = await Promise.all([
+      const [usersRes, subsRes, scoresRes, drawsRes, winnersRes, charitiesRes] = await Promise.all([
         fetch('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/admin/subscriptions', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/admin/scores', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/admin/draws', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/winners', { headers: { Authorization: `Bearer ${token}` } })
+        fetch('/api/admin/winners', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/admin/charities', { headers: { Authorization: `Bearer ${token}` } })
       ])
 
-      const [usersJson, subsJson, scoresJson, drawsJson, winnersJson] = await Promise.all([
+      const [usersJson, subsJson, scoresJson, drawsJson, winnersJson, charitiesJson] = await Promise.all([
         readJsonSafely(usersRes),
         readJsonSafely(subsRes),
         readJsonSafely(scoresRes),
         readJsonSafely(drawsRes),
-        readJsonSafely(winnersRes)
+        readJsonSafely(winnersRes),
+        readJsonSafely(charitiesRes)
       ])
 
+      const users = usersJson?.users || []
+      const draws = drawsJson?.draws || []
+      const charities = charitiesJson?.charities || []
       const totalPrizePool = (winnersJson?.winners || []).reduce(
         (sum: number, w: any) => sum + Number(w.amount ?? w.prize_amount ?? 0), 0
       )
+      const contributionValues = users
+        .map((user: any) => Number(user.contribution_percentage ?? user.selected_contribution_percentage ?? 0))
+        .filter((value: number) => value >= 10)
+      const totalCharityContribution = contributionValues.reduce((sum: number, value: number) => sum + value, 0)
 
       setStats({
-        totalUsers: usersJson?.users?.length || 0,
+        totalUsers: users.length || 0,
         activeSubscribers: (subsJson?.subscriptions || []).filter((s: any) => s.status === 'active').length,
         totalScores: scoresJson?.scores?.length || 0,
-        totalDraws: drawsJson?.draws?.length || 0,
+        totalDraws: draws.length || 0,
         totalWinners: winnersJson?.winners?.length || 0,
-        totalPrizePool
+        totalPrizePool,
+        activeDraws: draws.filter((draw: any) => ['scheduled', 'running', 'published'].includes(draw.status)).length,
+        completedDraws: draws.filter((draw: any) => draw.status === 'completed').length,
+        activeCharities: charities.filter((charity: any) => charity.is_active ?? charity.active ?? true).length,
+        totalCharityContribution,
+        averageCharityContribution: contributionValues.length > 0 ? totalCharityContribution / contributionValues.length : 0
       })
     } finally {
       setLoading(false)
@@ -94,7 +113,8 @@ export default function AdminPageClient() {
     { id: 'draws' as Tab, label: 'Draws', icon: '🎰' },
     { id: 'winners' as Tab, label: 'Winners', icon: '🏆' },
     { id: 'payouts' as Tab, label: 'Payouts', icon: '💰' },
-    { id: 'charities' as Tab, label: 'Charities', icon: '❤️' }
+    { id: 'charities' as Tab, label: 'Charities', icon: '❤️' },
+    { id: 'reports' as Tab, label: 'Reports', icon: 'R' }
   ]
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
@@ -188,7 +208,35 @@ export default function AdminPageClient() {
           {activeTab === 'winners' && <AdminWinnersPanel />}
           {activeTab === 'payouts' && <AdminPayoutsPanel />}
           {activeTab === 'charities' && <CharityManagement />}
+          {activeTab === 'reports' && <ReportsPanel stats={stats} />}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function ReportsPanel({ stats }: { stats: any }) {
+  const reportItems = [
+    { label: 'Total Users', value: stats.totalUsers },
+    { label: 'Total Prize Pool', value: `£${stats.totalPrizePool.toFixed(2)}` },
+    { label: 'Charity Contribution Total', value: `${stats.totalCharityContribution.toFixed(0)}%` },
+    { label: 'Average Charity Contribution', value: `${stats.averageCharityContribution.toFixed(1)}%` },
+    { label: 'Draws Created', value: stats.totalDraws },
+    { label: 'Active Draws', value: stats.activeDraws },
+    { label: 'Completed Draws', value: stats.completedDraws },
+    { label: 'Active Charities', value: stats.activeCharities }
+  ]
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-4">Reports</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {reportItems.map((item) => (
+          <div key={item.label} className="rounded-lg bg-surface p-4">
+            <p className="text-sm text-muted">{item.label}</p>
+            <p className="mt-2 text-2xl font-black text-primary">{item.value}</p>
+          </div>
+        ))}
       </div>
     </div>
   )
