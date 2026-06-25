@@ -152,6 +152,13 @@ export default function DashboardPageClient() {
   const totalWinnings = winnings.reduce((sum, w) => sum + (w.prize_amount || w.amount || 0), 0)
   const latestScore = scores[0]?.score_value ?? '-'
   const activeDraws = draws.filter((d) => d.status === 'scheduled' || d.status === 'running').length
+  const latestDraw = draws[0]
+  const completedDraws = draws.filter((d) => d.status === 'completed').length
+  const latestDrawDate = latestDraw?.draw_date ? new Date(latestDraw.draw_date).toLocaleDateString() : 'Not scheduled'
+  const latestPrizePool = Number(latestDraw?.prize_pool || 0)
+  const jackpotAmount = Number(latestDraw?.jackpot_amount || 0)
+  const secondPrize = Number(latestDraw?.second_prize || 0)
+  const thirdPrize = Number(latestDraw?.third_prize || 0)
   const contributionLabel = profile?.contribution_percentage != null ? `${profile.contribution_percentage}%` : '10%'
   const firstName = profile?.full_name?.split(' ')?.[0] || 'golfer'
 
@@ -461,29 +468,45 @@ export default function DashboardPageClient() {
           </div>
 
           <div className="brutal-card p-6">
-            <p className="section-eyebrow">Prize room</p>
-            <h2 className="mb-4 text-xl font-black">Draws</h2>
+            <p className="section-eyebrow">Admin overview</p>
+            <h2 className="mb-4 text-xl font-black">Draw Summary</h2>
             {draws.length === 0 ? (
-              <p className="text-muted text-center py-4">No draws available</p>
+              <p className="text-muted text-center py-4">No draw summary available yet</p>
             ) : (
-              <div className="space-y-3">
-                {draws.slice(0, 3).map((d) => (
-                  <div key={d.id} className="rounded-md bg-white/65 p-3">
-                    <p className="font-bold">{d.name || `Draw ${d.id.slice(0, 8)}`}</p>
-                    <p className="text-sm text-muted">
-                      {new Date(d.draw_date).toLocaleDateString()}
-                    </p>
-                    <p className="text-xs text-muted mt-1 capitalize">Status: {d.status}</p>
+              <div className="space-y-4">
+                <div className="rounded-md bg-white/65 p-4">
+                  <p className="font-bold">{latestDraw.name || 'Latest admin draw'}</p>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-muted">Date</p>
+                      <p className="font-black">{latestDrawDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted">Status</p>
+                      <p className="font-black capitalize">{latestDraw.status || 'scheduled'}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted">Active</p>
+                      <p className="font-black">{activeDraws}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted">Completed</p>
+                      <p className="font-black">{completedDraws}</p>
+                    </div>
                   </div>
-                ))}
+                </div>
+
+                <div className="rounded-md border border-black/10 bg-white/65 p-4">
+                  <p className="text-sm font-bold text-muted">Prize pool</p>
+                  <p className="mt-1 text-2xl font-black text-slate-950">£{latestPrizePool.toFixed(2)}</p>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-bold">
+                    <div className="rounded-md bg-white/80 p-2">Jackpot<br />£{jackpotAmount.toFixed(2)}</div>
+                    <div className="rounded-md bg-white/80 p-2">2nd<br />£{secondPrize.toFixed(2)}</div>
+                    <div className="rounded-md bg-white/80 p-2">3rd<br />£{thirdPrize.toFixed(2)}</div>
+                  </div>
+                </div>
               </div>
             )}
-            <button
-              onClick={() => router.push('/draws')}
-              className="brutal-btn brutal-btn-outline w-full mt-4"
-            >
-              View All Draws
-            </button>
           </div>
 
           {winnings.length > 0 && (
